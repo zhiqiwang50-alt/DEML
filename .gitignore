@@ -195,3 +195,7 @@ __pycache__/
 .env
 .venv/
 .vscode/
+# local backups and experiment outputs
+invert.py.bak
+runs/
+*.log
