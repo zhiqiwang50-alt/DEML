@@ -351,7 +351,7 @@ def forward_and_get_last_hidden_state(model, input_ids, attention_mask, layer_id
             hidden_state_list.append(output)
 
     for name, module in model.named_modules():
-        if len(name) > 1 and name[-2:] == str(layer_id):
+        if name == f"model.layers.{layer_id}":
             handle = module.register_forward_hook(forward_hook)
             hook_handles.append(handle)
     phi_relaxed = model(**new_inputs)
@@ -376,7 +376,7 @@ def get_perplexity(input_ids, model, layer_id, next_ids=None, top_k=None):
             hidden_state_list.append(output)
 
     for name, module in model.named_modules():
-        if len(name) > 1 and name[-2:] == str(layer_id):
+        if name == f"model.layers.{layer_id}":
             handle = module.register_forward_hook(forward_hook)
             hook_handles.append(handle)
     next_token_logits = model(**inputs).logits[:, -1, :]
@@ -525,7 +525,7 @@ def main(args):
     
             '''get hidden states from all layers'''
             for name, module in model.named_modules():
-                if len(name) > 1 and name[-2:] == str(args.num_invert_layers):
+                if name == f"model.layers.{args.num_invert_layers}":
                     handle = module.register_forward_hook(forward_hook)
                     hook_handles.append(handle)
             phi_relaxed = model(**new_inputs)
