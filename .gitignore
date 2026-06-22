@@ -198,4 +198,13 @@ __pycache__/
 # local backups and experiment outputs
 invert.py.bak
 runs/
+*.bak
+*.tmp
+*.orig
+
+# Hugging Face and local model caches
+hf_cache/
+huggingface/
+.huggingface/
+transformers_cache/
 *.log

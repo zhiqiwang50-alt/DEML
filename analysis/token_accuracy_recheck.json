@@ -1,0 +1,301 @@
+{
+  "rows": [
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p3_a2_seed42/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9982186379928315,
+      "token_accuracy_std_excluding_special": 0.006656645453076689,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p3_a2_seed43/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9989955568160332,
+      "token_accuracy_std_excluding_special": 0.0037870973778896763,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p3_a2_seed44/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9993638676844784,
+      "token_accuracy_std_excluding_special": 0.003050783411776544,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p3_a3_seed42/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.999500550291894,
+      "token_accuracy_std_excluding_special": 0.0016572970271860044,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p3_a3_seed43/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9735507246376811,
+      "token_accuracy_std_excluding_special": 0.12684626855138714,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p3_a3_seed44/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9957372841017272,
+      "token_accuracy_std_excluding_special": 0.019265968729158863,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p4_a2_seed42/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9958294374318217,
+      "token_accuracy_std_excluding_special": 0.016172804459383436,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p4_a2_seed43/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.981547619047619,
+      "token_accuracy_std_excluding_special": 0.08849451025160375,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p4_a2_seed44/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9866251774211159,
+      "token_accuracy_std_excluding_special": 0.06269075061338218,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p4_a3_seed42/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.994065301272454,
+      "token_accuracy_std_excluding_special": 0.018677998044162474,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p4_a3_seed43/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9816797718624091,
+      "token_accuracy_std_excluding_special": 0.08268878740121978,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p4_a3_seed44/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9993097232641494,
+      "token_accuracy_std_excluding_special": 0.002397800995711046,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p4_a4_seed42/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9939777294912954,
+      "token_accuracy_std_excluding_special": 0.025860089706646064,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p4_a4_seed43/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9921255330918639,
+      "token_accuracy_std_excluding_special": 0.02640897331929034,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p4_a4_seed44/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.998819941163498,
+      "token_accuracy_std_excluding_special": 0.003373343235547629,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a2_seed42/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.962260129068688,
+      "token_accuracy_std_excluding_special": 0.0934345866416541,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a2_seed43/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9906867230992146,
+      "token_accuracy_std_excluding_special": 0.04247709280308496,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a2_seed44/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9934593023255814,
+      "token_accuracy_std_excluding_special": 0.03136808409143493,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a3_seed42/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 1.0,
+      "token_accuracy_std_excluding_special": 0.0,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a3_seed43/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9984264408493427,
+      "token_accuracy_std_excluding_special": 0.00496161592846813,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a3_seed44/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9994513793889649,
+      "token_accuracy_std_excluding_special": 0.0018330776637612485,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a4_seed42/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.999500550291894,
+      "token_accuracy_std_excluding_special": 0.0016572970271860044,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a4_seed43/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9735507246376811,
+      "token_accuracy_std_excluding_special": 0.12684626855138714,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a4_seed44/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9950013039877278,
+      "token_accuracy_std_excluding_special": 0.019205793411229306,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a5_seed42/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9994918699186992,
+      "token_accuracy_std_excluding_special": 0.0024369062618458965,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a5_seed43/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 0.9965749566582698,
+      "token_accuracy_std_excluding_special": 0.007383184763023626,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "predictions_path": "runs/tinyllama_full/main_results/p5_a5_seed44/predictions.jsonl",
+      "sample_count": 24,
+      "token_accuracy_mean_excluding_special": 1.0,
+      "token_accuracy_std_excluding_special": 0.0,
+      "excluded_special_token_ids": [
+        1,
+        2,
+        0
+      ]
+    }
+  ]
+}
