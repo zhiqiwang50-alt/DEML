@@ -208,3 +208,13 @@ huggingface/
 .huggingface/
 transformers_cache/
 *.log
+# Generated research presentation artifacts
+*.pptx
+*.ppt
+*.pdf
+analysis/*group_meeting*/
+# Local scratch files
+Hello.txt
+remote_edit/
+.DS_Store
+Thumbs.db

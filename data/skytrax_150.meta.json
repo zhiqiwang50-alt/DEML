@@ -1,0 +1,21 @@
+{
+  "source": "airlinequality.com airline review pages (Skytrax-branded public review pages)",
+  "sample_count": 150,
+  "slugs": [
+    "british-airways",
+    "emirates",
+    "qatar-airways",
+    "singapore-airlines",
+    "lufthansa",
+    "air-france",
+    "klm-royal-dutch-airlines",
+    "turkish-airlines",
+    "american-airlines",
+    "united-airlines",
+    "delta-air-lines",
+    "ryanair",
+    "easyjet"
+  ],
+  "ascii_filter": true,
+  "min_length": 80
+}
