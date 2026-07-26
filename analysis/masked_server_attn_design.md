@@ -1,55 +1,80 @@
-# Masked Server Attention PIA Design
+# Masked and Tempered Server-Attention Prompt Inversion Design
 
-This document records the current MTS-PIA branch implemented in `pia_masked_server_attn_pia.py`.
+## Layer mapping
 
-## Method Boundary
+TinyLlama uses 0-based block indices. `capture_prefix_activation(model, target_layer=L, ...)` manually executes blocks `0..L` and returns the output of block `L`. Thus `target_layer=17` is `H^(17)`, and server-side layers are `18..21`.
 
-- B0 / `original_pia_baseline`: all-valid uniform activation matching, kept as the original baseline definition.
-- B0V / `variable_only_uniform`: variable-token-only uniform activation matching.
-- P1 / `server_attn_last_raw`: raw last-query server attention rollout, kept as a negative control.
-- P2 / `mts_mean_query`: server-side attention rollout with variable mask, power tempering, clipping, beta mixing, and activation calibration.
-- P3 / `mts_last_window`: same MTS body, but the attention source is the final variable query window.
+## Starting point
 
-P2/P3 do not use dummy attention, alpha initialization, or gradient reranking in this branch.
+The existing SAW-PIA result already feeds `H_obs` through public server-side layers, extracts each server layer attention, averages heads, applies `RowNorm(I + A)`, and computes rollout in forward order:
 
-## Audit Semantics
+`R = A_tilde_last @ ... @ A_tilde_first`
 
-The attack path receives observed activation, sequence length, public model/tokenizer/config objects, and public framing assumptions. It must not receive prompt text, `original_ids`, `original_tokens`, or token ids.
+The leakage verification shows that `H_obs` is the target block output, server layers start at `target_layer + 1`, and manual server forward matches full-model forward.
 
-- Position 0 and other `fixed_public` positions are public framing positions that the attacker can determine.
-- If the attack API has no token ids, `token_id_based_special_mask_available=false`; the code must not claim token-id EOS detection.
-- `last_valid_position` is only the last valid sequence position. It can be excluded as EOS only when the public protocol explicitly fixes the final token as EOS.
-- Audit fields therefore use `raw_last_valid_mass` and `final_last_valid_weight`, not EOS naming.
+## Motivation
 
-## MTS Weight Construction
+Full Skytrax-150 top-1 results show that raw last-query weighting degrades strongly at deeper layers. The rollout mass can concentrate on position 0, and the old weighted loss does not explicitly exclude fixed public/special token positions.
 
-For P2/P3, the server side starts from the captured prefix activation and forwards through public server blocks. Attention matrices are averaged across heads, optionally include residual rollout, and are multiplied across the selected server depth.
+## Audit semantics
 
-The final loss weights are built as:
+The attack function receives `H_obs`, sequence length, tokenizer/model/config, and public framing assumptions. It does not receive `original_ids`, `original_tokens`, or prompt text.
 
-1. choose query source: mean query for P2, final variable query window for P3;
+- `fixed_public` positions such as position 0 can be determined by the public protocol and are safe to mark as public framing positions.
+- When `token_ids=None`, `token_id_based_special_mask_available=false`; the branch cannot claim it identified EOS from token id.
+- `last_valid_position` is only the last position allowed by the attention mask. It is not called EOS in the audit.
+- Only if a public protocol explicitly fixes the final token as EOS should a caller exclude that position as public framing.
+- Weight statistics therefore use `raw_last_valid_mass` and `final_last_valid_weight`, not EOS names.
+
+## Implemented methods
+
+- B0 / `original_pia_baseline`: original PIA baseline with uniform activation loss over all valid tokens.
+- B0V / `variable_only_uniform`: new variable-token-only uniform baseline. Fixed public and special positions have final weight 0.
+- P1 / `server_attn_last_raw`: old raw last-query rollout, kept only as a negative control.
+- P2 / `mts_mean_query`: MTS weights from mean query attention over variable query positions.
+- P3 / `mts_last_window`: MTS weights from the final variable query window.
+
+No dummy attention or alpha-initialization combo is used in this branch.
+
+## MTS loss
+
+The branch builds a `variable_mask` from the attention mask and public fixed positions. For P2/P3 it extracts server-side attention by forwarding only from `H_obs` through public server layers, computes attention rollout, and converts rollout mass into token weights:
+
+1. choose the source query set: `mean_query` or `last_window_mean`;
 2. zero all non-variable positions;
-3. apply power tempering;
-4. clip to `weight_min` / `weight_max`;
-5. renormalize variable-token mean weight to 1;
-6. mix with uniform variable weights using beta;
-7. enforce fixed public final weights as 0.
+3. apply power tempering with `--weight-power`;
+4. clip to `--weight-min` / `--weight-max`;
+5. renormalize variable-token mean weight to 1.0;
+6. mix with uniform weights using `--beta`;
+7. enforce fixed public/special final weights as 0.
 
-## Development and Held-Out Protocol
+With `--beta 0`, P2/P3 reduce to B0V for the weighted loss and recovered ids in the unit tests.
 
-Development set:
+## Development ablation
 
-- Skytrax-28, seed42, layer17, epoch100, K=10, Y=10.
-- P2/P3 grid searched beta, weight power, and weight max on seed42 only.
-- Structure ablation also used seed42 only.
+`--mode dev-ablation` runs the requested Skytrax-28 seed42 layer17 development grid in the same branch:
 
-Frozen held-out candidates:
+- baselines: B0, B0V, P1;
+- P2/P3 grid: beta 0.25/0.50/0.75, power 0.25/0.50/1.00, weight_max 2/4;
+- fixed settings: epoch 100, K=10, Y=10, residual rollout on, rollout depth all, weight_min 0.25;
+- auto-batch is capacity-aware, so `--max-jobs-per-gpu 1` keeps one active task per GPU;
+- outputs: `dev_ablation.csv`, `dev_ablation.md`, `dev_weight_summary.csv`, `dev_token_accuracy.png`, and `dev_weight_concentration.png`.
 
-- P2: beta 0.75, weight_power 0.50, weight_min 0.25, weight_max 4.0, residual rollout on, server depth last2.
-- P3: beta 0.25, weight_power 0.50, weight_min 0.25, weight_max 2.0, residual rollout on, server depth all.
+## Resource-aware batching
 
-Seeds 43 and 44 are held-out validation seeds and were not used for retuning. The original stop rule was triggered at seed43. After the user explicitly requested to ignore the stop rule, seed44 and exploratory layer11/layer19 runs were completed without changing the method or frozen parameters.
+The new runner adds `--mode plan-batch` and `--auto-batch`. It reads current GPU free memory with `nvidia-smi`, reserves a safety buffer, and schedules concurrent single-prompt optimization workers only on GPUs with enough free memory.
 
-## Current Interpretation
+Current conservative defaults:
 
-The development result was positive, but held-out seed43/44 did not reproduce the gain over B0V. Exploratory layer runs after the explicit override were mixed: layer11 was positive for frozen P3, while layer19 was negative. This branch should therefore be reported as a useful negative/diagnostic result rather than a stable improvement.
+- `--batch-free-mb-per-job 6144`
+- `--batch-reserve-free-mb 2048`
+- `--max-jobs-per-gpu 2`
+- `--max-parallel-jobs 3`
+
+Under the checked server state, this selects two workers: GPU0 and GPU3. This shortens wall-clock time while avoiding the tighter-memory GPU1/GPU2.
+
+## Required checks
+
+- Unit tests cover beta=0 equivalence, recovered ids under beta=0, fixed/special zero weights, max clipping, last-window variable-only query positions, and B0 all-valid loss.
+- Leakage verification checks that the attack API does not receive prompt/original ids, manual server forward matches full-model forward, and no dummy attention is used.
+- Current pilot smoke is Skytrax-28, dataset_len=2, seed=42, layer=17, epoch=100, K=10, Y=10, methods B0/B0V/P1/P2/P3.

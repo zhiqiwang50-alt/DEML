@@ -69,11 +69,38 @@ METHODS = [
     "P1",
     "P2",
     "P3",
+    "P4",
+    "P4S",
+    "P4D",
+    "P4DL",
+    "P4DR",
+    "P4C",
+    "P4DG",
+    "P4SRES",
+    "P4A",
+    "P4SR",
+    "P4CAR",
+    "P4DPTR",
+    "P4CARPTR",
+    "CAR",
+    "CARPTR",
+    "P5",
+    "P6",
     "original_pia_baseline",
     "variable_only_uniform",
     "server_attn_last_raw",
     "mts_mean_query",
     "mts_last_window",
+    "attn_scale_mean_query",
+    "attn_scale_mean_query_schedule",
+    "attn_scale_mean_query_schedule_residual",
+    "attn_scale_mean_query_adaptive_beta",
+    "attn_scale_mean_query_schedule_refine",
+    "confidence_aware_rollout_residual",
+    "attn_weighted_residual_ptr",
+    "confidence_aware_rollout_residual_ptr",
+    "attn_scale_last_window",
+    "attn_scale_last_window_gate",
 ]
 METHOD_ALIASES = {
     "B0": "original_pia_baseline",
@@ -81,11 +108,64 @@ METHOD_ALIASES = {
     "P1": "server_attn_last_raw",
     "P2": "mts_mean_query",
     "P3": "mts_last_window",
+    "P4": "attn_scale_mean_query",
+    "P4S": "attn_scale_mean_query_schedule",
+    "P4D": "attn_weighted_residual_schedule",
+    "P4DL": "attn_linear_weighted_residual_schedule",
+    "P4DR": "attn_rho_weighted_residual_schedule",
+    "P4C": "attn_calibrated_weighted_residual_schedule",
+    "P4DG": "attn_gate_weighted_residual_schedule",
+    "P4SRES": "attn_scale_mean_query_schedule_residual",
+    "P4A": "attn_scale_mean_query_adaptive_beta",
+    "P4SR": "attn_scale_mean_query_schedule_refine",
+    "P4CAR": "confidence_aware_rollout_residual",
+    "CAR": "confidence_aware_rollout_residual",
+    "P4DPTR": "attn_weighted_residual_ptr",
+    "P4CARPTR": "confidence_aware_rollout_residual_ptr",
+    "CARPTR": "confidence_aware_rollout_residual_ptr",
+    "P5": "attn_scale_last_window",
+    "P6": "attn_scale_last_window_gate",
 }
 BASELINE_METHODS = {"original_pia_baseline", "variable_only_uniform"}
 RAW_SERVER_ATTN_METHODS = {"server_attn_last_raw"}
 MTS_METHODS = {"mts_mean_query", "mts_last_window"}
-SERVER_ATTN_METHODS = RAW_SERVER_ATTN_METHODS | MTS_METHODS
+ATTN_SCALE_METHODS = {
+    "attn_scale_mean_query",
+    "attn_scale_mean_query_schedule",
+    "attn_scale_mean_query_schedule_residual",
+    "attn_weighted_residual_schedule",
+    "attn_linear_weighted_residual_schedule",
+    "attn_rho_weighted_residual_schedule",
+    "attn_calibrated_weighted_residual_schedule",
+    "attn_gate_weighted_residual_schedule",
+    "attn_scale_mean_query_adaptive_beta",
+    "attn_scale_mean_query_schedule_refine",
+    "confidence_aware_rollout_residual",
+    "attn_weighted_residual_ptr",
+    "confidence_aware_rollout_residual_ptr",
+    "attn_scale_last_window",
+    "attn_scale_last_window_gate",
+}
+CAR_METHODS = {
+    "confidence_aware_rollout_residual",
+    "confidence_aware_rollout_residual_ptr",
+}
+PTR_METHODS = {
+    "attn_weighted_residual_ptr",
+    "confidence_aware_rollout_residual_ptr",
+}
+ATTENTION_WEIGHTED_RESIDUAL_METHODS = {
+    "attn_weighted_residual_schedule",
+    "attn_rho_weighted_residual_schedule",
+    "attn_calibrated_weighted_residual_schedule",
+    "attn_gate_weighted_residual_schedule",
+    "confidence_aware_rollout_residual",
+    "attn_weighted_residual_ptr",
+    "confidence_aware_rollout_residual_ptr",
+}
+SERVER_ATTN_METHODS = RAW_SERVER_ATTN_METHODS | MTS_METHODS | ATTN_SCALE_METHODS | CAR_METHODS | PTR_METHODS
+SERVER_ATTENTION_METHODS = SERVER_ATTN_METHODS
+PROJECTION_REFINE_METHODS = {"attn_scale_mean_query_schedule_refine"}
 DUMMY_METHODS: set[str] = set()
 ALPHA_METHODS: set[str] = set()
 HELDOUT_FROZEN_CANDIDATES: Dict[str, Dict[str, Any]] = {
@@ -142,9 +222,18 @@ class AutoBatchTask:
     weight_power: Optional[float] = None
     weight_min: Optional[float] = None
     weight_max: Optional[float] = None
+    alpha_min: Optional[float] = None
+    alpha_max: Optional[float] = None
+    attention_start_ratio: Optional[float] = None
+    attention_full_ratio: Optional[float] = None
+    uncertainty_fraction: Optional[float] = None
+    adaptive_min_beta: Optional[float] = None
+    refine_epoch: Optional[int] = None
+    lambda_projection: Optional[float] = None
+    refine_lr_scale: Optional[float] = None
+    residual_alpha_rho: Optional[float] = None
     residual_rollout: Optional[bool] = None
     server_rollout_depth: Optional[str] = None
-
 
 @dataclass(frozen=True)
 class VariableMaskAudit:
@@ -375,6 +464,16 @@ def build_single_run_command(args: argparse.Namespace, task: AutoBatchTask) -> L
     weight_power = args.weight_power if task.weight_power is None else task.weight_power
     weight_min = args.weight_min if task.weight_min is None else task.weight_min
     weight_max = args.weight_max if task.weight_max is None else task.weight_max
+    alpha_min = args.alpha_min if task.alpha_min is None else task.alpha_min
+    alpha_max = args.alpha_max if task.alpha_max is None else task.alpha_max
+    attention_start_ratio = args.attention_start_ratio if task.attention_start_ratio is None else task.attention_start_ratio
+    attention_full_ratio = args.attention_full_ratio if task.attention_full_ratio is None else task.attention_full_ratio
+    uncertainty_fraction = args.uncertainty_fraction if task.uncertainty_fraction is None else task.uncertainty_fraction
+    adaptive_min_beta = args.adaptive_min_beta if task.adaptive_min_beta is None else task.adaptive_min_beta
+    refine_epoch = args.refine_epoch if task.refine_epoch is None else task.refine_epoch
+    lambda_projection = args.lambda_projection if task.lambda_projection is None else task.lambda_projection
+    refine_lr_scale = args.refine_lr_scale if task.refine_lr_scale is None else task.refine_lr_scale
+    residual_alpha_rho = args.residual_alpha_rho if task.residual_alpha_rho is None else task.residual_alpha_rho
     residual_rollout = (not args.no_residual_rollout) if task.residual_rollout is None else bool(task.residual_rollout)
     server_rollout_depth = args.server_rollout_depth if task.server_rollout_depth is None else task.server_rollout_depth
     command = [
@@ -428,6 +527,26 @@ def build_single_run_command(args: argparse.Namespace, task: AutoBatchTask) -> L
         str(weight_min),
         "--weight-max",
         str(weight_max),
+        "--alpha-min",
+        str(alpha_min),
+        "--alpha-max",
+        str(alpha_max),
+        "--attention-start-ratio",
+        str(attention_start_ratio),
+        "--attention-full-ratio",
+        str(attention_full_ratio),
+        "--uncertainty-fraction",
+        str(uncertainty_fraction),
+        "--adaptive-min-beta",
+        str(adaptive_min_beta),
+        "--refine-epoch",
+        str(refine_epoch),
+        "--lambda-projection",
+        str(lambda_projection),
+        "--refine-lr-scale",
+        str(refine_lr_scale),
+        "--residual-alpha-rho",
+        str(residual_alpha_rho),
         "--beta",
         str(beta),
         "--last-window-size",
@@ -603,6 +722,15 @@ class SAWConfig:
     weight_power: float
     weight_min: float
     weight_max: float
+    alpha_min: float
+    alpha_max: float
+    attention_start_ratio: float
+    attention_full_ratio: float
+    uncertainty_fraction: float
+    adaptive_min_beta: float
+    refine_epoch: int
+    lambda_projection: float
+    refine_lr_scale: float
     beta: float
     last_window_size: int
     residual_rollout: bool
@@ -610,11 +738,46 @@ class SAWConfig:
     adaptive_discretization: bool
     semantic_speculation: bool
     local_files_only: bool
+    residual_alpha_rho: float = 1.0
     fix_boundary_specials: bool = True
 
 
 def canonical_method(method: str) -> str:
     return METHOD_ALIASES.get(method, method)
+
+
+def validate_strict_top1_config(args) -> None:
+    method = canonical_method(getattr(args, "method", ""))
+    if method not in PTR_METHODS and method not in CAR_METHODS:
+        return
+    k = int(getattr(args, "k", 1))
+    y = int(getattr(args, "y", 0))
+    semantic = bool(getattr(args, "semantic_speculation", False))
+    if k != 1:
+        raise ValueError(f"{method} requires strict Top-1: k must be 1, got {k}")
+    if y != 0:
+        raise ValueError(f"{method} requires strict Top-1: y must be 0, got {y}")
+    if semantic:
+        raise ValueError(f"{method} requires semantic_speculation=False")
+
+
+def validate_strict_top1_method_list(args, methods) -> None:
+    for method in methods:
+        method_args = argparse.Namespace(**vars(args))
+        method_args.method = canonical_method(method)
+        validate_strict_top1_config(method_args)
+
+
+def validate_strict_top1_methods(args) -> None:
+    validate_strict_top1_method_list(args, getattr(args, "methods", []) or [])
+
+
+def validate_strict_top1_for_mode(args) -> None:
+    mode = getattr(args, "mode", "single")
+    if mode in {"single", "verify"}:
+        validate_strict_top1_config(args)
+    elif mode in {"multi-layer", "plan-batch"}:
+        validate_strict_top1_method_list(args, getattr(args, "methods", []) or [])
 
 
 def row_normalize(mat: torch.Tensor) -> torch.Tensor:
@@ -753,6 +916,507 @@ def weighted_variable_activation_loss(
     return (per_token * w.unsqueeze(0)).sum() / w.sum().clamp_min(1e-12)
 
 
+def attention_scaled_activation_loss(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    variable_mask: torch.Tensor,
+    alpha: torch.Tensor,
+) -> torch.Tensor:
+    variable = variable_mask.to(pred.device).bool()
+    if int(variable.sum().detach().cpu()) == 0:
+        raise RuntimeError("variable_mask has no variable positions")
+    scaled_pred = pred.float() * alpha.to(pred.device).float().view(1, -1, 1)
+    per_token = torch.mean((scaled_pred - target.to(pred.device).float()) ** 2, dim=-1)
+    return per_token[:, variable].mean()
+
+
+def attention_weighted_residual_loss(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    variable_mask: torch.Tensor,
+    alpha: torch.Tensor,
+) -> torch.Tensor:
+    variable = variable_mask.to(pred.device).bool()
+    if int(variable.sum().detach().cpu()) == 0:
+        raise RuntimeError("variable_mask has no variable positions")
+    residual = (pred.float() - target.to(pred.device).float()) * alpha.to(pred.device).float().view(1, -1, 1)
+    per_token = torch.mean(residual ** 2, dim=-1)
+    return per_token[:, variable].mean()
+
+
+def attention_linear_weighted_residual_loss(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    variable_mask: torch.Tensor,
+    alpha: torch.Tensor,
+) -> torch.Tensor:
+    variable = variable_mask.to(pred.device).bool()
+    if int(variable.sum().detach().cpu()) == 0:
+        raise RuntimeError("variable_mask has no variable positions")
+    alpha_sqrt = torch.sqrt(alpha.to(pred.device).float().clamp_min(1e-12)).view(1, -1, 1)
+    residual = (pred.float() - target.to(pred.device).float()) * alpha_sqrt
+    per_token = torch.mean(residual ** 2, dim=-1)
+    return per_token[:, variable].mean()
+
+
+def attention_scale_schedule_active(step_index: int, epoch: int, start_ratio: float) -> bool:
+    total = max(1, int(epoch))
+    threshold = int(math.floor(total * min(1.0, max(0.0, float(start_ratio)))))
+    return int(step_index) >= threshold
+
+
+def attention_scale_linear_schedule_beta(
+    step_index: int,
+    epoch: int,
+    start_ratio: float,
+    full_ratio: float,
+    max_beta: float,
+) -> float:
+    total = max(1, int(epoch))
+    progress = min(1.0, max(0.0, float(step_index) / float(total)))
+    start = min(1.0, max(0.0, float(start_ratio)))
+    full = min(1.0, max(0.0, float(full_ratio)))
+    beta = max(0.0, float(max_beta))
+    if progress <= start:
+        return 0.0
+    if full <= start:
+        return beta
+    if progress >= full:
+        return beta
+    return beta * ((progress - start) / max(1e-12, full - start))
+
+
+def schedule_residual_alpha(
+    *,
+    alpha: torch.Tensor,
+    variable_mask: torch.Tensor,
+    epoch_index: int,
+    warmup_epochs: int = 50,
+    ramp_end_epoch: int = 70,
+    weight_min: float = 0.5,
+    weight_max: float = 1.5,
+    eps: float = 1e-8,
+) -> torch.Tensor:
+    variable_mask = variable_mask.to(alpha.device).bool()
+    out = torch.zeros_like(alpha, dtype=torch.float32)
+    if int(variable_mask.sum().item()) == 0:
+        return out
+    if epoch_index <= warmup_epochs:
+        ramp = 0.0
+    elif epoch_index >= ramp_end_epoch:
+        ramp = 1.0
+    else:
+        ramp = float(epoch_index - warmup_epochs) / float(ramp_end_epoch - warmup_epochs)
+    target_w = alpha.detach().float().pow(2)
+    scheduled_w = 1.0 + ramp * (target_w[variable_mask] - 1.0)
+    scheduled_w = bounded_mean_one_project(
+        scheduled_w,
+        lower=float(weight_min),
+        upper=float(weight_max),
+        eps=eps,
+    )
+    out[variable_mask] = torch.sqrt(scheduled_w.to(dtype=out.dtype, device=out.device))
+    return out
+
+
+def interpolate_attention_alpha(
+    alpha: torch.Tensor,
+    variable_mask: torch.Tensor,
+    ramp: float,
+    alpha_min: float,
+    alpha_max: float,
+) -> torch.Tensor:
+    variable = variable_mask.to(alpha.device).bool()
+    factor = min(1.0, max(0.0, float(ramp)))
+    mixed = torch.where(variable, 1.0 + factor * (alpha.float() - 1.0), torch.zeros_like(alpha.float()))
+    return bounded_mean_one_weights(mixed, variable, float(alpha_min), float(alpha_max)).detach()
+
+
+def residualize_attention_alpha(
+    alpha: torch.Tensor,
+    variable_mask: torch.Tensor,
+    rho: float,
+    alpha_min: float,
+    alpha_max: float,
+) -> torch.Tensor:
+    if not (0.0 <= float(rho) <= 1.0):
+        raise ValueError('rho must be in [0, 1]')
+    variable = variable_mask.to(alpha.device).bool()
+    if int(variable.sum().detach().cpu()) == 0:
+        raise RuntimeError('variable_mask has no variable positions')
+    base = alpha.float()
+    mixed = torch.zeros_like(base, dtype=torch.float32)
+    mixed[variable] = 1.0 + float(rho) * (base[variable] - 1.0)
+    return bounded_mean_one_weights(mixed, variable, float(alpha_min), float(alpha_max)).detach()
+
+
+def embedding_uncertainty_scores(
+    z: torch.Tensor,
+    embed_weight: torch.Tensor,
+    variable_mask: torch.Tensor,
+) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    variable = variable_mask.to(z.device).bool()
+    scores = torch.zeros(variable.shape, dtype=torch.float32, device=z.device)
+    positions = torch.nonzero(variable, as_tuple=False).flatten()
+    if positions.numel() == 0:
+        return scores, {
+            "adaptive_uncertainty_mean": 0.0,
+            "adaptive_uncertainty_min": 0.0,
+            "adaptive_uncertainty_max": 0.0,
+            "adaptive_margin_mean": 0.0,
+        }
+    distances = torch.cdist(z.detach().float()[0, positions], embed_weight.detach().float().to(z.device))
+    if distances.shape[1] < 2:
+        margins = torch.zeros(distances.shape[0], dtype=torch.float32, device=z.device)
+    else:
+        top2 = torch.topk(distances, k=2, largest=False, dim=-1).values
+        margins = top2[:, 1] - top2[:, 0]
+    margin_min = margins.min()
+    margin_max = margins.max()
+    denom = (margin_max - margin_min).clamp_min(1e-12)
+    if float((margin_max - margin_min).detach().cpu()) <= 1e-12:
+        normalized = torch.ones_like(margins)
+    else:
+        normalized = (margin_max - margins) / denom
+    scores[positions] = normalized.clamp(0.0, 1.0)
+    values = scores[variable]
+    return scores.detach(), {
+        "adaptive_uncertainty_mean": float(values.mean().detach().cpu()),
+        "adaptive_uncertainty_min": float(values.min().detach().cpu()),
+        "adaptive_uncertainty_max": float(values.max().detach().cpu()),
+        "adaptive_margin_mean": float(margins.mean().detach().cpu()),
+        "adaptive_margin_min": float(margins.min().detach().cpu()),
+        "adaptive_margin_max": float(margins.max().detach().cpu()),
+    }
+
+
+def apply_adaptive_attention_beta(
+    alpha: torch.Tensor,
+    variable_mask: torch.Tensor,
+    uncertainty_scores: torch.Tensor,
+    base_beta: float,
+    min_beta: float,
+    alpha_min: float,
+    alpha_max: float,
+) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    variable = variable_mask.to(alpha.device).bool()
+    positions = torch.nonzero(variable, as_tuple=False).flatten()
+    if positions.numel() == 0:
+        raise RuntimeError("variable_mask has no variable positions")
+    beta_max = max(0.0, float(base_beta))
+    beta_min = min(beta_max, max(0.0, float(min_beta)))
+    uncertainty = uncertainty_scores.to(alpha.device).float().clamp(0.0, 1.0)
+    token_beta = torch.zeros_like(alpha.float())
+    token_beta[variable] = beta_min + (beta_max - beta_min) * uncertainty[variable]
+    if beta_max <= 1e-12:
+        mixed = torch.where(variable, torch.ones_like(alpha.float()), torch.zeros_like(alpha.float()))
+        factor = torch.zeros_like(alpha.float())
+    else:
+        factor = torch.zeros_like(alpha.float())
+        factor[variable] = token_beta[variable] / beta_max
+        mixed = torch.where(variable, 1.0 + factor * (alpha.float() - 1.0), torch.zeros_like(alpha.float()))
+    adapted = bounded_mean_one_weights(mixed, variable, float(alpha_min), float(alpha_max)).detach()
+    values = adapted[variable]
+    beta_values = token_beta[variable]
+    factor_values = factor[variable]
+    return adapted, {
+        "adaptive_beta_min": float(beta_values.min().detach().cpu()),
+        "adaptive_beta_mean": float(beta_values.mean().detach().cpu()),
+        "adaptive_beta_max": float(beta_values.max().detach().cpu()),
+        "adaptive_beta_factor_mean": float(factor_values.mean().detach().cpu()) if factor_values.numel() else 0.0,
+        "mean_alpha": float(values.mean().detach().cpu()),
+        "std_alpha": float(values.std(unbiased=False).detach().cpu()) if values.numel() > 1 else 0.0,
+        "min_alpha": float(values.min().detach().cpu()),
+        "max_alpha": float(values.max().detach().cpu()),
+    }
+
+
+def projection_refinement_loss(
+    z: torch.Tensor,
+    embed_weight: torch.Tensor,
+    variable_mask: torch.Tensor,
+    chunk_size: int = 2048,
+) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    variable = variable_mask.to(z.device).bool()
+    positions = torch.nonzero(variable, as_tuple=False).flatten()
+    if positions.numel() == 0:
+        return torch.tensor(0.0, device=z.device), {
+            "projection_variable_count": 0,
+            "projection_top1_only": True,
+        }
+    vectors = z[0, positions].float()
+    weight = embed_weight.detach().float().to(z.device)
+    best_ids = torch.zeros(vectors.shape[0], device=z.device, dtype=torch.long)
+    best_dists = torch.full((vectors.shape[0],), float("inf"), device=z.device)
+    with torch.no_grad():
+        vector_norm = torch.sum(vectors.detach() * vectors.detach(), dim=1, keepdim=True)
+        for start in range(0, weight.shape[0], int(chunk_size)):
+            chunk = weight[start : start + int(chunk_size)]
+            dists = vector_norm + torch.sum(chunk * chunk, dim=1).unsqueeze(0) - 2 * vectors.detach() @ chunk.t()
+            values, indices = torch.min(dists, dim=1)
+            update = values < best_dists
+            best_dists = torch.where(update, values, best_dists)
+            best_ids = torch.where(update, indices + start, best_ids)
+    nearest = weight[best_ids].detach()
+    loss = F.mse_loss(vectors, nearest, reduction="mean")
+    return loss, {
+        "projection_variable_count": int(positions.numel()),
+        "projection_top1_only": True,
+        "projection_distance_mean": float(best_dists.mean().detach().cpu()),
+        "projection_distance_min": float(best_dists.min().detach().cpu()),
+        "projection_distance_max": float(best_dists.max().detach().cpu()),
+    }
+
+
+def _attention_raw_from_rollout(
+    rollout: torch.Tensor,
+    valid: torch.Tensor,
+    variable: torch.Tensor,
+    source: str,
+    last_window_size: int,
+) -> Tuple[torch.Tensor, List[int]]:
+    valid_positions = torch.nonzero(valid, as_tuple=False).flatten()
+    variable_positions = torch.nonzero(variable, as_tuple=False).flatten()
+    if valid_positions.numel() == 0:
+        raise RuntimeError("attention_mask has no valid positions")
+    if variable_positions.numel() == 0:
+        raise RuntimeError("variable_mask has no variable positions")
+    if source == "mean_query":
+        query_positions = [int(x) for x in variable_positions.detach().cpu().tolist()]
+        raw = rollout[variable].mean(dim=0)
+    elif source == "last_window_mean":
+        selected = variable_positions[-max(1, int(last_window_size)) :]
+        query_positions = [int(x) for x in selected.detach().cpu().tolist()]
+        raw = rollout[selected].mean(dim=0)
+    elif source == "last_query_raw":
+        query_positions = [int(valid_positions[-1].detach().cpu())]
+        raw = rollout[query_positions[0]].clone()
+    elif source == "uniform":
+        query_positions = [int(x) for x in variable_positions.detach().cpu().tolist()]
+        raw = torch.ones(rollout.shape[0], dtype=torch.float32, device=rollout.device)
+    else:
+        raise ValueError(f"unknown attention scale source={source!r}")
+    return raw.float().clamp_min(0.0), query_positions
+
+
+def _attention_scale_stats(
+    alpha: torch.Tensor,
+    variable: torch.Tensor,
+    fixed_public: Dict[int, int],
+    valid: torch.Tensor,
+    base_stats: Dict[str, Any],
+) -> Dict[str, Any]:
+    values = alpha[variable]
+    valid_positions = torch.nonzero(valid, as_tuple=False).flatten()
+    last_valid = int(valid_positions[-1].detach().cpu()) if valid_positions.numel() else None
+    fixed_sum = 0.0
+    for pos in fixed_public:
+        if 0 <= int(pos) < alpha.numel():
+            fixed_sum += float(alpha[int(pos)].detach().cpu())
+    stats = dict(base_stats)
+    stats.update(
+        {
+            "last_valid_position": last_valid,
+            "final_bos_alpha": float(alpha[0].detach().cpu()) if alpha.numel() else 0.0,
+            "final_last_valid_alpha": float(alpha[last_valid].detach().cpu()) if last_valid is not None else 0.0,
+            "fixed_public_alpha_sum": fixed_sum,
+            "mean_alpha": float(values.mean().detach().cpu()),
+            "std_alpha": float(values.std(unbiased=False).detach().cpu()) if values.numel() > 1 else 0.0,
+            "min_alpha": float(values.min().detach().cpu()),
+            "max_alpha": float(values.max().detach().cpu()),
+            "mean": float(values.mean().detach().cpu()),
+            "std": float(values.std(unbiased=False).detach().cpu()) if values.numel() > 1 else 0.0,
+            "min": float(values.min().detach().cpu()),
+            "max": float(values.max().detach().cpu()),
+            "alpha_active_count": int(values.numel()),
+            "alpha_active_mean": float(values.mean().detach().cpu()),
+            "alpha_active_std": float(values.std(unbiased=False).detach().cpu()) if values.numel() > 1 else 0.0,
+            "alpha_active_min": float(values.min().detach().cpu()),
+            "alpha_active_max": float(values.max().detach().cpu()),
+            "top_positions": [
+                {"position": int(i), "alpha": float(alpha[i].detach().cpu())}
+                for i in torch.topk(alpha, min(10, alpha.numel())).indices.detach().cpu().tolist()
+            ],
+        }
+    )
+    return stats
+
+
+def build_attention_scale_alpha(
+    rollout: torch.Tensor,
+    attention_mask: torch.Tensor,
+    variable_mask: torch.Tensor,
+    fixed_public: Dict[int, int],
+    source: str,
+    power: float,
+    alpha_min: float,
+    alpha_max: float,
+    beta: float,
+    last_window_size: int,
+) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    if rollout.dim() != 2 or rollout.shape[0] != rollout.shape[1]:
+        raise RuntimeError(f"rollout must be [seq, seq], got {list(rollout.shape)}")
+    if attention_mask.dim() != 2 or attention_mask.shape[0] != 1 or rollout.shape[0] != attention_mask.shape[1]:
+        raise RuntimeError("rollout and attention_mask sequence lengths do not match")
+    if not (0.0 <= beta <= 1.0):
+        raise ValueError("beta must be in [0, 1]")
+    if power <= 0:
+        raise ValueError("power must be positive")
+    if alpha_min <= 0 or alpha_max <= 0 or alpha_min > alpha_max or alpha_min > 1.0 or alpha_max < 1.0:
+        raise ValueError("alpha bounds must allow mean-one alpha")
+    valid = attention_mask[0].to(rollout.device).bool()
+    variable = variable_mask.to(rollout.device).bool() & valid
+    positions = torch.nonzero(variable, as_tuple=False).flatten()
+    if positions.numel() == 0:
+        raise RuntimeError("variable_mask has no variable positions")
+    raw, query_positions = _attention_raw_from_rollout(rollout, valid, variable, source, last_window_size)
+    raw_sum = raw.sum().clamp_min(1e-12)
+    valid_positions = torch.nonzero(valid, as_tuple=False).flatten()
+    last_valid = int(valid_positions[-1].detach().cpu())
+    masked = raw * variable.float()
+    if float(masked.sum().detach().cpu()) <= 0.0:
+        masked = variable.float()
+    tempered = ((masked + 1e-12) ** float(power)) * variable.float()
+    mean_one = float(positions.numel()) * tempered / tempered.sum().clamp_min(1e-12)
+    mixed = torch.where(variable, 1.0 + float(beta) * (mean_one - 1.0), torch.zeros_like(mean_one))
+    alpha = bounded_mean_one_weights(mixed, variable, float(alpha_min), float(alpha_max)) * variable.float()
+    base_stats = {
+        "source": source,
+        "weight_source": source,
+        "query_positions": query_positions,
+        "weight_power": float(power),
+        "alpha_min": float(alpha_min),
+        "alpha_max": float(alpha_max),
+        "beta": float(beta),
+        "last_window_size": int(last_window_size),
+        "variable_count": int(positions.numel()),
+        "raw_sum_before_mask": float(raw_sum.detach().cpu()),
+        "raw_sum_after_mask": float(masked.sum().detach().cpu()),
+        "raw_bos_mass": float((raw[0] / raw_sum).detach().cpu()) if raw.numel() else 0.0,
+        "raw_last_valid_mass": float((raw[last_valid] / raw_sum).detach().cpu()),
+        "gate_open_rate": None,
+    }
+    return alpha.detach(), _attention_scale_stats(alpha, variable, fixed_public, valid, base_stats)
+
+
+def apply_attention_scale_gate(
+    alpha: torch.Tensor,
+    variable_mask: torch.Tensor,
+    gate_mask: torch.Tensor,
+    alpha_min: float,
+    alpha_max: float,
+) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    variable = variable_mask.to(alpha.device).bool()
+    gate = gate_mask.to(alpha.device).bool() & variable
+    gated = torch.zeros_like(alpha, dtype=torch.float32)
+    gated[variable & ~gate] = 1.0
+    if int(gate.sum().detach().cpu()) > 0:
+        active = bounded_mean_one_weights(alpha.float(), gate, float(alpha_min), float(alpha_max))
+        gated[gate] = active[gate]
+    elif int(variable.sum().detach().cpu()) > 0:
+        gated[variable] = 1.0
+    values = gated[variable]
+    active_values = gated[gate]
+    active_count = int(gate.sum().detach().cpu())
+    variable_count = int(variable.sum().detach().cpu())
+    return gated.detach(), {
+        "gate_open_rate": float(active_count / max(1, variable_count)),
+        "alpha_active_count": active_count,
+        "alpha_active_mean": float(active_values.mean().detach().cpu()) if active_count else None,
+        "alpha_active_std": float(active_values.std(unbiased=False).detach().cpu()) if active_count > 1 else 0.0 if active_count == 1 else None,
+        "alpha_active_min": float(active_values.min().detach().cpu()) if active_count else None,
+        "alpha_active_max": float(active_values.max().detach().cpu()) if active_count else None,
+        "mean_alpha": float(values.mean().detach().cpu()) if variable_count else 0.0,
+        "std_alpha": float(values.std(unbiased=False).detach().cpu()) if variable_count > 1 else 0.0,
+        "min_alpha": float(values.min().detach().cpu()) if variable_count else 0.0,
+        "max_alpha": float(values.max().detach().cpu()) if variable_count else 0.0,
+        "mean": float(values.mean().detach().cpu()) if variable_count else 0.0,
+        "std": float(values.std(unbiased=False).detach().cpu()) if variable_count > 1 else 0.0,
+        "min": float(values.min().detach().cpu()) if variable_count else 0.0,
+        "max": float(values.max().detach().cpu()) if variable_count else 0.0,
+    }
+
+
+def calibrated_residual_alpha(
+    alpha: torch.Tensor,
+    variable_mask: torch.Tensor,
+    gate_mask: torch.Tensor,
+    rho: float,
+    alpha_min: float,
+    alpha_max: float,
+) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    variable = variable_mask.to(alpha.device).bool()
+    gate = gate_mask.to(alpha.device).bool() & variable
+    variable_count = int(variable.sum().detach().cpu())
+    active_count = int(gate.sum().detach().cpu())
+    calibrated = torch.zeros_like(alpha, dtype=torch.float32)
+    if variable_count == 0:
+        return calibrated.detach(), {
+            "gate_open_rate": 0.0,
+            "alpha_active_count": 0,
+            "calibrated_rho": float(rho),
+        }
+    calibrated[variable] = 1.0
+    if active_count > 0:
+        shrunken = torch.where(
+            gate,
+            1.0 + float(rho) * (alpha.float().to(alpha.device) - 1.0),
+            torch.ones_like(alpha, dtype=torch.float32),
+        )
+        active = bounded_mean_one_weights(shrunken, gate, float(alpha_min), float(alpha_max))
+        calibrated[gate] = active[gate]
+    values = calibrated[variable]
+    active_values = calibrated[gate]
+    return calibrated.detach(), {
+        "gate_open_rate": float(active_count / max(1, variable_count)),
+        "alpha_active_count": active_count,
+        "calibrated_rho": float(rho),
+        "alpha_active_mean": float(active_values.mean().detach().cpu()) if active_count else None,
+        "alpha_active_std": float(active_values.std(unbiased=False).detach().cpu()) if active_count > 1 else 0.0 if active_count == 1 else None,
+        "alpha_active_min": float(active_values.min().detach().cpu()) if active_count else None,
+        "alpha_active_max": float(active_values.max().detach().cpu()) if active_count else None,
+        "mean_alpha": float(values.mean().detach().cpu()),
+        "std_alpha": float(values.std(unbiased=False).detach().cpu()) if variable_count > 1 else 0.0,
+        "min_alpha": float(values.min().detach().cpu()),
+        "max_alpha": float(values.max().detach().cpu()),
+        "mean": float(values.mean().detach().cpu()),
+        "std": float(values.std(unbiased=False).detach().cpu()) if variable_count > 1 else 0.0,
+        "min": float(values.min().detach().cpu()),
+        "max": float(values.max().detach().cpu()),
+    }
+
+
+def embedding_uncertainty_gate(
+    z: torch.Tensor,
+    embed_weight: torch.Tensor,
+    variable_mask: torch.Tensor,
+    uncertainty_fraction: float,
+) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    variable = variable_mask.to(z.device).bool()
+    positions = torch.nonzero(variable, as_tuple=False).flatten()
+    gate = torch.zeros(variable.shape, dtype=torch.bool, device=z.device)
+    if positions.numel() == 0:
+        return gate, {"uncertainty_fraction": float(uncertainty_fraction), "gate_active_count": 0, "gate_open_rate": 0.0}
+    distances = torch.cdist(z.detach().float()[0, positions], embed_weight.detach().float().to(z.device))
+    if distances.shape[1] < 2:
+        margins = torch.zeros(distances.shape[0], dtype=torch.float32, device=z.device)
+    else:
+        top2 = torch.topk(distances, k=2, largest=False, dim=-1).values
+        margins = top2[:, 1] - top2[:, 0]
+    fraction = min(1.0, max(0.0, float(uncertainty_fraction)))
+    k = 0 if fraction <= 0.0 else max(1, int(math.ceil(fraction * int(positions.numel()))))
+    selected = positions[torch.argsort(margins, descending=False)[:k]]
+    gate[selected] = True
+    return gate, {
+        "uncertainty_fraction": fraction,
+        "gate_active_count": int(selected.numel()),
+        "gate_open_rate": float(selected.numel() / max(1, int(positions.numel()))),
+        "margin_mean": float(margins.mean().detach().cpu()),
+        "margin_min": float(margins.min().detach().cpu()),
+        "margin_max": float(margins.max().detach().cpu()),
+    }
+
+
 def bounded_mean_one_weights(values: torch.Tensor, variable_mask: torch.Tensor, weight_min: float, weight_max: float) -> torch.Tensor:
     variable = variable_mask.to(values.device).bool()
     positions = torch.nonzero(variable, as_tuple=False).flatten()
@@ -788,6 +1452,160 @@ def bounded_mean_one_weights(values: torch.Tensor, variable_mask: torch.Tensor, 
     if active.numel() > 0 and remaining_sum > 0:
         result[active] = remaining_sum / float(active.numel())
     return result * variable.float()
+
+
+def bounded_mean_one_project(
+    weights: torch.Tensor,
+    lower: float,
+    upper: float,
+    eps: float = 1e-8,
+) -> torch.Tensor:
+    if lower > 1.0 or upper < 1.0:
+        raise ValueError("weight bounds must allow mean-one weights")
+    if weights.numel() == 0:
+        return weights.detach().float()
+
+    original_dtype = weights.dtype
+    values = weights.detach().to(dtype=torch.float64).clamp_min(float(eps))
+    lo = torch.zeros((), dtype=torch.float64, device=values.device)
+    hi = torch.ones((), dtype=torch.float64, device=values.device)
+    target = float(values.numel())
+    lower_f = float(lower)
+    upper_f = float(upper)
+
+    for _ in range(128):
+        if float(torch.clamp(values * hi, min=lower_f, max=upper_f).sum().item()) >= target:
+            break
+        hi = hi * 2.0
+
+    for _ in range(128):
+        mid = (lo + hi) / 2.0
+        projected = torch.clamp(values * mid, min=lower_f, max=upper_f)
+        if float(projected.sum().item()) < target:
+            lo = mid
+        else:
+            hi = mid
+
+    projected = torch.clamp(values * hi, min=lower_f, max=upper_f)
+    residual = target - float(projected.sum().item())
+    if abs(residual) > float(eps):
+        adjustable = (projected > lower_f + float(eps)) & (projected < upper_f - float(eps))
+        if bool(adjustable.any().item()):
+            projected[adjustable] += residual / float(adjustable.sum().item())
+            projected = torch.clamp(projected, min=lower_f, max=upper_f)
+    return projected.to(dtype=original_dtype if original_dtype.is_floating_point else torch.float32)
+
+
+def build_confidence_aware_residual_alpha(
+    *,
+    r_all: torch.Tensor,
+    r_last2: torch.Tensor,
+    variable_mask: torch.Tensor,
+    weight_min: float = 0.5,
+    weight_max: float = 1.5,
+    strength: float = 0.25,
+    power: float = 0.5,
+    eps: float = 1e-8,
+) -> tuple[torch.Tensor, torch.Tensor, dict[str, float]]:
+    r_all = r_all.detach().float()
+    r_last2 = r_last2.detach().float()
+    variable_mask = variable_mask.bool()
+    if r_all.shape != r_last2.shape:
+        raise ValueError(f"r_all and r_last2 shape mismatch: {r_all.shape} vs {r_last2.shape}")
+    if r_all.shape != variable_mask.shape:
+        raise ValueError(f"rollout and variable_mask shape mismatch: {r_all.shape} vs {variable_mask.shape}")
+
+    alpha = torch.zeros_like(r_all, dtype=torch.float32)
+    confidence = torch.zeros_like(r_all, dtype=torch.float32)
+    if int(variable_mask.sum().item()) == 0:
+        return alpha, confidence, {
+            "variable_final_weight_mean": 0.0,
+            "variable_final_weight_std": 0.0,
+            "fixed_public_final_weight_sum": 0.0,
+            "final_fixed_weight_sum": 0.0,
+            "final_max_weight": 0.0,
+            "final_min_weight": 0.0,
+            "max": 0.0,
+            "min": 0.0,
+            "confidence_mean": 0.0,
+            "confidence_min": 0.0,
+            "confidence_max": 0.0,
+            "rollout_disagreement_mean": 0.0,
+            "rollout_disagreement_median": 0.0,
+        }
+
+    consensus = torch.sqrt((r_all.clamp_min(0.0) + eps) * (r_last2.clamp_min(0.0) + eps))
+    variable_consensus = consensus[variable_mask].clamp_min(eps).pow(power)
+    normalized = variable_consensus / variable_consensus.sum().clamp_min(eps)
+    normalized = normalized * float(variable_consensus.numel())
+
+    disagreement = torch.abs(torch.log(r_all.clamp_min(0.0) + eps) - torch.log(r_last2.clamp_min(0.0) + eps))
+    variable_disagreement = disagreement[variable_mask]
+    median_disagreement = torch.median(variable_disagreement).clamp_min(eps)
+    variable_confidence = torch.exp(-variable_disagreement / median_disagreement)
+
+    raw_w = 1.0 + float(strength) * variable_confidence * (normalized - 1.0)
+    raw_w = raw_w.clamp_min(eps)
+    w = bounded_mean_one_project(
+        raw_w,
+        lower=float(weight_min),
+        upper=float(weight_max),
+        eps=eps,
+    )
+
+    alpha[variable_mask] = torch.sqrt(w)
+    confidence[variable_mask] = variable_confidence
+    fixed_weight_sum = float(alpha[~variable_mask].pow(2).sum().item())
+    stats = {
+        "variable_final_weight_mean": float(w.mean().item()),
+        "variable_final_weight_std": float(w.std(unbiased=False).item()) if w.numel() > 1 else 0.0,
+        "fixed_public_final_weight_sum": fixed_weight_sum,
+        "final_fixed_weight_sum": fixed_weight_sum,
+        "final_max_weight": float(w.max().item()),
+        "final_min_weight": float(w.min().item()),
+        "max": float(w.max().item()),
+        "min": float(w.min().item()),
+        "confidence_mean": float(variable_confidence.mean().item()),
+        "confidence_min": float(variable_confidence.min().item()),
+        "confidence_max": float(variable_confidence.max().item()),
+        "rollout_disagreement_mean": float(variable_disagreement.mean().item()),
+        "rollout_disagreement_median": float(median_disagreement.item()),
+    }
+    return alpha, confidence, stats
+
+
+def build_car_attention_bundle_from_rollouts(
+    *,
+    r_all: torch.Tensor,
+    r_last2: torch.Tensor,
+    variable_mask: torch.Tensor,
+    weight_min: float,
+    weight_max: float,
+    strength: float,
+    power: float,
+    eps: float = 1e-8,
+) -> tuple[torch.Tensor, torch.Tensor, dict[str, float]]:
+    alpha, confidence, stats = build_confidence_aware_residual_alpha(
+        r_all=r_all,
+        r_last2=r_last2,
+        variable_mask=variable_mask,
+        weight_min=weight_min,
+        weight_max=weight_max,
+        strength=strength,
+        power=power,
+        eps=eps,
+    )
+    variable_mask = variable_mask.bool()
+    variable_count = int(variable_mask.sum().item())
+    stats.update({
+        'rollout_all_variable_mass': float(r_all[variable_mask].sum().item()) if variable_count else 0.0,
+        'rollout_last2_variable_mass': float(r_last2[variable_mask].sum().item()) if variable_count else 0.0,
+        'car_strength': float(strength),
+        'car_power': float(power),
+        'car_weight_min': float(weight_min),
+        'car_weight_max': float(weight_max),
+    })
+    return alpha, confidence, stats
 
 
 def build_mts_token_weights(
@@ -1034,21 +1852,35 @@ def server_attention_bundle(
     fixed_public: Dict[int, int],
     variable_audit: VariableMaskAudit,
 ) -> Tuple[Optional[torch.Tensor], Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
-    if cfg.weight_source == "uniform":
+    if cfg.weight_source == "uniform" and cfg.method not in CAR_METHODS:
         seq = observed_activation.shape[1]
         rollout = torch.eye(seq, dtype=torch.float32, device=observed_activation.device)
-        weights, weight_stats = build_mts_token_weights(
-            rollout,
-            attention_mask,
-            variable_audit.variable_mask,
-            fixed_public,
-            "uniform",
-            cfg.weight_power,
-            cfg.weight_min,
-            cfg.weight_max,
-            cfg.beta,
-            cfg.last_window_size,
-        )
+        if cfg.method in ATTN_SCALE_METHODS:
+            weights, weight_stats = build_attention_scale_alpha(
+                rollout,
+                attention_mask,
+                variable_audit.variable_mask,
+                fixed_public,
+                "uniform",
+                cfg.weight_power,
+                cfg.alpha_min,
+                cfg.alpha_max,
+                cfg.beta,
+                cfg.last_window_size,
+            )
+        else:
+            weights, weight_stats = build_mts_token_weights(
+                rollout,
+                attention_mask,
+                variable_audit.variable_mask,
+                fixed_public,
+                "uniform",
+                cfg.weight_power,
+                cfg.weight_min,
+                cfg.weight_max,
+                cfg.beta,
+                cfg.last_window_size,
+            )
         return weights, {"used": False, "reason": "uniform weight mode"}, {"rollout_shape": [seq, seq]}, weight_stats
     start = cfg.target_layer + 1
     if start >= len(model.model.layers):
@@ -1064,9 +1896,43 @@ def server_attention_bundle(
         )
     attentions = [attn for _idx, attn in collected]
     rollout = rollout_from_attentions(attentions, residual=cfg.residual_rollout)
-    if cfg.method == "server_attn_last_raw":
+    if cfg.method in CAR_METHODS:
+        last2_attentions = attentions[-2:] if len(attentions) >= 2 else attentions
+        r_last2 = rollout_from_attentions(last2_attentions, residual=cfg.residual_rollout)
+        weights, _confidence, weight_stats = build_car_attention_bundle_from_rollouts(
+            r_all=rollout,
+            r_last2=r_last2,
+            variable_mask=variable_audit.variable_mask,
+            weight_min=float(getattr(cfg, "car_weight_min", 0.5)),
+            weight_max=float(getattr(cfg, "car_weight_max", 1.5)),
+            strength=float(getattr(cfg, "car_strength", 0.25)),
+            power=float(getattr(cfg, "car_power", 0.5)),
+        )
+        weight_stats["method_role"] = "confidence_aware_rollout_residual"
+        weight_stats["rollout_depth"] = "all+last2"
+        weight_stats["attention_formula"] = "confidence_aware_rollout_residual"
+    elif cfg.method == "server_attn_last_raw":
         weights, weight_stats = token_weights_from_rollout(rollout, attention_mask, "last_query", cfg.weight_floor, fixed_public)
         weight_stats["method_role"] = "negative_control_raw_last_query"
+    elif cfg.method in ATTN_SCALE_METHODS:
+        weights, weight_stats = build_attention_scale_alpha(
+            rollout,
+            attention_mask,
+            variable_audit.variable_mask,
+            fixed_public,
+            cfg.weight_source,
+            cfg.weight_power,
+            cfg.alpha_min,
+            cfg.alpha_max,
+            cfg.beta,
+            cfg.last_window_size,
+        )
+        if cfg.method in ATTENTION_WEIGHTED_RESIDUAL_METHODS:
+            weight_stats["method_role"] = "attention_weighted_residual"
+        elif cfg.method == "attn_linear_weighted_residual_schedule":
+            weight_stats["method_role"] = "attention_linear_weighted_residual"
+        else:
+            weight_stats["method_role"] = "attention_scaled_activation"
     else:
         weights, weight_stats = build_mts_token_weights(
             rollout,
@@ -1100,6 +1966,18 @@ def server_attention_bundle(
         "nonnegative_min": float(rollout.min().detach().cpu()),
         "top_left_16x16": rollout[:16, :16].detach().cpu().tolist(),
     }
+    weight_stats.update(
+        {
+            "method": cfg.method,
+            "residual_rollout": bool(cfg.residual_rollout),
+            "rollout_depth": "all+last2" if cfg.method in CAR_METHODS else cfg.server_rollout_depth,
+            "attention_start_ratio": float(cfg.attention_start_ratio),
+            "attention_full_ratio": float(cfg.attention_full_ratio),
+            "adaptive_min_beta": float(cfg.adaptive_min_beta),
+            "token_id_based_special_mask_available": bool(variable_audit.token_id_based_special_mask_available),
+            "known_public_special_positions": list(variable_audit.known_public_special_positions),
+        }
+    )
     if abs(rollout_stats["row_sum_min"] - 1.0) > 2e-3 or abs(rollout_stats["row_sum_max"] - 1.0) > 2e-3:
         raise RuntimeError(f"rollout rows are not normalized: {rollout_stats}")
     if rollout_stats["nonnegative_min"] < -1e-6:
@@ -1145,14 +2023,93 @@ def stage_b_optimize(
         all_token_uniform = uniform_all_token_activation_loss(hidden, target, attention_mask)
         variable_uniform = weighted_variable_activation_loss(hidden, target, variable_audit.variable_mask, None)
         weighted_variable = weighted_variable_activation_loss(hidden, target, variable_audit.variable_mask, server_weights)
+        scale_loss_active = False
+        attention_scaled = variable_uniform
+        attention_active_loss_mode = "attention_scaled_activation"
+        attention_effective_beta: Optional[float] = None
+        if cfg.method in ATTN_SCALE_METHODS:
+            if server_weights is None:
+                raise RuntimeError(f"attention-scale method {cfg.method!r} requires alpha weights")
+            alpha_for_step = server_weights
+            if cfg.method in CAR_METHODS:
+                alpha_for_step = schedule_residual_alpha(
+                    alpha=server_weights,
+                    variable_mask=variable_audit.variable_mask,
+                    epoch_index=step + 1,
+                    warmup_epochs=int(getattr(cfg, "car_warmup_epochs", 50)),
+                    ramp_end_epoch=int(getattr(cfg, "car_ramp_end_epoch", 70)),
+                    weight_min=float(getattr(cfg, "car_weight_min", 0.5)),
+                    weight_max=float(getattr(cfg, "car_weight_max", 1.5)),
+                ).to(server_weights.device)
+                attention_scaled = attention_weighted_residual_loss(hidden, target, variable_audit.variable_mask, alpha_for_step)
+                attention_active_loss_mode = "confidence_aware_rollout_residual"
+                attention_effective_beta = None
+                scale_loss_active = True
+            else:
+                if cfg.method in {
+                    "attn_scale_mean_query_schedule",
+                    "attn_scale_mean_query_schedule_refine",
+                    "attn_scale_mean_query_schedule_residual",
+                    "attn_weighted_residual_schedule",
+                    "attn_linear_weighted_residual_schedule",
+                    "attn_rho_weighted_residual_schedule",
+                    "attn_calibrated_weighted_residual_schedule",
+                    "attn_gate_weighted_residual_schedule",
+                }:
+                    attention_effective_beta = attention_scale_linear_schedule_beta(
+                        step + 1,
+                        cfg.epoch,
+                        cfg.attention_start_ratio,
+                        cfg.attention_full_ratio,
+                        cfg.beta,
+                    )
+                    ramp = 0.0 if cfg.beta <= 1e-12 else attention_effective_beta / cfg.beta
+                    alpha_for_step = interpolate_attention_alpha(
+                        server_weights,
+                        variable_audit.variable_mask,
+                        ramp,
+                        cfg.alpha_min,
+                        cfg.alpha_max,
+                    ).to(server_weights.device)
+                    if cfg.method in {
+                        "attn_scale_mean_query_schedule_residual",
+                        "attn_rho_weighted_residual_schedule",
+                    }:
+                        alpha_for_step = residualize_attention_alpha(
+                            alpha_for_step,
+                            variable_audit.variable_mask,
+                            cfg.residual_alpha_rho,
+                            cfg.alpha_min,
+                            cfg.alpha_max,
+                        ).to(server_weights.device)
+                    scale_loss_active = attention_effective_beta > 0.0
+                else:
+                    attention_effective_beta = cfg.beta if attention_scale_schedule_active(step, cfg.epoch, cfg.attention_start_ratio) else 0.0
+                    scale_loss_active = attention_effective_beta > 0.0
+                if cfg.method == "attn_linear_weighted_residual_schedule":
+                    attention_scaled = attention_linear_weighted_residual_loss(hidden, target, variable_audit.variable_mask, alpha_for_step)
+                    attention_active_loss_mode = "attention_linear_weighted_residual"
+                elif cfg.method in ATTENTION_WEIGHTED_RESIDUAL_METHODS:
+                    attention_scaled = attention_weighted_residual_loss(hidden, target, variable_audit.variable_mask, alpha_for_step)
+                    attention_active_loss_mode = "attention_weighted_residual"
+                else:
+                    attention_scaled = attention_scaled_activation_loss(hidden, target, variable_audit.variable_mask, alpha_for_step)
+                    attention_active_loss_mode = "attention_scaled_activation"
         if cfg.method == "original_pia_baseline":
             act_loss = all_token_uniform
+            loss_mode = "all_valid_uniform"
         elif cfg.method == "variable_only_uniform":
             act_loss = variable_uniform
+            loss_mode = "variable_uniform"
         elif cfg.method == "server_attn_last_raw":
             act_loss = weighted_activation_loss(hidden, target, server_weights)
+            loss_mode = "raw_server_attention_weight"
         elif cfg.method in MTS_METHODS:
             act_loss = weighted_variable
+            loss_mode = "masked_tempered_weighted_error"
+        elif cfg.method in ATTN_SCALE_METHODS:
+            act_loss = attention_scaled if scale_loss_active else variable_uniform
+            loss_mode = attention_active_loss_mode if scale_loss_active else "variable_uniform_warmup"
         else:
             raise ValueError(f"unknown Stage B method={cfg.method!r}")
         vocab_loss = nearest_embedding_loss(variable_view(z, fixed_positions), embed_layer.weight)
@@ -1175,13 +2132,20 @@ def stage_b_optimize(
             "all_token_uniform_loss": float(all_token_uniform.detach().cpu()),
             "variable_uniform_loss": float(variable_uniform.detach().cpu()),
             "weighted_variable_loss": float(weighted_variable.detach().cpu()),
+            "attention_scaled_loss": float(attention_scaled.detach().cpu()),
+            "scale_loss_active": bool(scale_loss_active),
+            "attention_effective_beta": None if attention_effective_beta is None else float(attention_effective_beta),
+            "loss_mode": loss_mode,
             "vocab_loss": float(vocab_loss.detach().cpu()),
             "context_loss": float(ctx_loss.detach().cpu()),
             "optimization_loss": float(total.detach().cpu()),
             "cosine_similarity": float(cosine.detach().cpu()),
         }
-        if (step + 1) % max(1, min(50, cfg.epoch)) == 0 or step == cfg.epoch - 1:
+        log_step = (step + 1) % max(1, min(50, cfg.epoch)) == 0 or step == cfg.epoch - 1
+        record_step = cfg.method in ATTN_SCALE_METHODS or log_step
+        if record_step:
             history.append({"step": step + 1, **final})
+        if log_step:
             print(
                 f"method={cfg.method} step={step + 1} act={final['activation_loss']:.6f} "
                 f"base_act={final['unweighted_activation_loss']:.6f} vocab={final['vocab_loss']:.6f} "
@@ -1191,6 +2155,81 @@ def stage_b_optimize(
             )
     enforce_embedding_constraints(z, fixed_positions, fixed_embeds, left, right)
     return z.detach().float(), final, history
+
+
+def projection_refine_embeddings(
+    model: torch.nn.Module,
+    cfg: SAWConfig,
+    observed_activation: torch.Tensor,
+    variable_audit: VariableMaskAudit,
+    fixed_public: Dict[int, int],
+    z_init: torch.Tensor,
+    server_weights: Optional[torch.Tensor],
+    device: torch.device,
+) -> Tuple[torch.Tensor, Dict[str, Any], List[Dict[str, float]]]:
+    if cfg.refine_epoch <= 0 or cfg.lambda_projection <= 0:
+        return z_init.detach(), {"projection_refinement_used": False, "reason": "disabled"}, []
+    if server_weights is None:
+        raise RuntimeError(f"projection refinement for {cfg.method!r} requires alpha weights")
+    embed_layer = model.get_input_embeddings()
+    seq_len = int(z_init.shape[1])
+    attention_mask = torch.ones((1, seq_len), dtype=torch.long, device=device)
+    fixed_embeds, fixed_positions, _ = fixed_embedding_tensor(embed_layer, fixed_public, seq_len, device)
+    left, right = embedding_bounds(embed_layer.weight)
+    left = left.to(device)
+    right = right.to(device)
+    z = z_init.detach().clone().to(device=device, dtype=torch.float32).requires_grad_(True)
+    lr = max(1e-6, float(cfg.lr) * float(cfg.refine_lr_scale))
+    optimizer = torch.optim.AdamW([z], lr=lr)
+    target = observed_activation.detach()
+    history: List[Dict[str, float]] = []
+    final: Dict[str, Any] = {}
+    for step in range(max(1, int(cfg.refine_epoch))):
+        enforce_embedding_constraints(z, fixed_positions, fixed_embeds, left, right)
+        hidden = capture_prefix_activation(
+            model,
+            cfg.target_layer,
+            inputs_embeds=z.to(dtype=embed_layer.weight.dtype),
+            attention_mask=attention_mask,
+        )
+        scale_loss = attention_scaled_activation_loss(
+            hidden,
+            target,
+            variable_audit.variable_mask,
+            server_weights,
+        )
+        proj_loss, proj_stats = projection_refinement_loss(z, embed_layer.weight, variable_audit.variable_mask)
+        total = scale_loss + float(cfg.lambda_projection) * proj_loss
+        cosine = F.cosine_similarity(hidden.float(), target.to(hidden.device).float(), dim=-1).mean()
+        if torch.isnan(total) or torch.isnan(cosine):
+            raise RuntimeError(f"NaN in projection refinement at step {step + 1}")
+        optimizer.zero_grad()
+        total.backward()
+        if cfg.grad_clip > 0:
+            torch.nn.utils.clip_grad_norm_([z], cfg.grad_clip)
+        optimizer.step()
+        final = {
+            "phase": "projection_refinement",
+            "step": step + 1,
+            "projection_refinement_loss": float(total.detach().cpu()),
+            "projection_scale_loss": float(scale_loss.detach().cpu()),
+            "projection_loss": float(proj_loss.detach().cpu()),
+            "cosine_similarity": float(cosine.detach().cpu()),
+        }
+        if step == 0 or (step + 1) == int(cfg.refine_epoch):
+            history.append(dict(final))
+    enforce_embedding_constraints(z, fixed_positions, fixed_embeds, left, right)
+    stats = {
+        "projection_refinement_used": True,
+        "projection_refine_epoch": int(cfg.refine_epoch),
+        "lambda_projection": float(cfg.lambda_projection),
+        "refine_lr_scale": float(cfg.refine_lr_scale),
+        "refine_lr": float(lr),
+        **final,
+    }
+    if "proj_stats" in locals():
+        stats.update(proj_stats)
+    return z.detach().float(), stats, history
 
 
 def invert_observed(
@@ -1253,11 +2292,79 @@ def invert_observed(
             "server_attn_last_raw": "last_query_raw",
             "mts_mean_query": "mean_query",
             "mts_last_window": "last_window_mean",
+            "attn_scale_mean_query": "mean_query",
+            "attn_scale_mean_query_schedule": "mean_query",
+            "attn_scale_mean_query_schedule_residual": "mean_query",
+            "attn_weighted_residual_schedule": "mean_query",
+            "attn_linear_weighted_residual_schedule": "mean_query",
+            "attn_rho_weighted_residual_schedule": "mean_query",
+            "attn_calibrated_weighted_residual_schedule": "mean_query",
+            "attn_gate_weighted_residual_schedule": "mean_query",
+            "attn_scale_mean_query_adaptive_beta": "mean_query",
+            "attn_scale_mean_query_schedule_refine": "mean_query",
+            "confidence_aware_rollout_residual": "mean_query",
+            "attn_weighted_residual_ptr": "mean_query",
+            "confidence_aware_rollout_residual_ptr": "mean_query",
+            "attn_scale_last_window": "last_window_mean",
+            "attn_scale_last_window_gate": "last_window_mean",
         }[method]
         cfg.weight_source = source
         server_weights, server_stats, rollout_stats, weight_stats = server_attention_bundle(
             model, observed_activation, attention_mask, cfg, fixed_public, variable_audit
         )
+        if method in {
+            "attn_scale_last_window_gate",
+            "attn_gate_weighted_residual_schedule",
+            "attn_calibrated_weighted_residual_schedule",
+        }:
+            gate_mask, gate_stats = embedding_uncertainty_gate(
+                init_embeds,
+                embed_layer.weight,
+                variable_audit.variable_mask,
+                cfg.uncertainty_fraction,
+            )
+            if method == "attn_calibrated_weighted_residual_schedule":
+                server_weights, gated_stats = calibrated_residual_alpha(
+                    server_weights,
+                    variable_audit.variable_mask,
+                    gate_mask,
+                    cfg.residual_alpha_rho,
+                    cfg.alpha_min,
+                    cfg.alpha_max,
+                )
+            else:
+                server_weights, gated_stats = apply_attention_scale_gate(
+                    server_weights,
+                    variable_audit.variable_mask,
+                    gate_mask,
+                    cfg.alpha_min,
+                    cfg.alpha_max,
+                )
+            valid = variable_audit.valid_mask.to(server_weights.device).bool()
+            variable = variable_audit.variable_mask.to(server_weights.device).bool() & valid
+            weight_stats.update(_attention_scale_stats(server_weights, variable, fixed_public, valid, {}))
+            weight_stats.update(gate_stats)
+            weight_stats.update(gated_stats)
+        elif method == "attn_scale_mean_query_adaptive_beta":
+            uncertainty_scores, uncertainty_stats = embedding_uncertainty_scores(
+                init_embeds,
+                embed_layer.weight,
+                variable_audit.variable_mask,
+            )
+            server_weights, adaptive_stats = apply_adaptive_attention_beta(
+                server_weights,
+                variable_audit.variable_mask,
+                uncertainty_scores,
+                cfg.beta,
+                cfg.adaptive_min_beta,
+                cfg.alpha_min,
+                cfg.alpha_max,
+            )
+            valid = variable_audit.valid_mask.to(server_weights.device).bool()
+            variable = variable_audit.variable_mask.to(server_weights.device).bool() & valid
+            weight_stats.update(_attention_scale_stats(server_weights, variable, fixed_public, valid, {}))
+            weight_stats.update(uncertainty_stats)
+            weight_stats.update(adaptive_stats)
         attention_stats.update(server_stats)
     elif method == "variable_only_uniform":
         last_valid = variable_audit.last_valid_position
@@ -1310,6 +2417,27 @@ def invert_observed(
         server_weights,
         a_context=a_dummy if use_dummy_context else None,
     )
+    if method in PROJECTION_REFINE_METHODS:
+        z, projection_stats, projection_history = projection_refine_embeddings(
+            model,
+            cfg,
+            observed_activation,
+            variable_audit,
+            fixed_public,
+            z,
+            server_weights,
+            device,
+        )
+        losses.update(
+            {
+                "projection_refinement_used": projection_stats.get("projection_refinement_used"),
+                "projection_refinement_loss": projection_stats.get("projection_refinement_loss"),
+                "projection_scale_loss": projection_stats.get("projection_scale_loss"),
+                "projection_loss": projection_stats.get("projection_loss"),
+            }
+        )
+        weight_stats["projection_refinement"] = projection_stats
+        stage_b_history.extend(projection_history)
     embed_sets = embedding_candidates(z, embed_layer.weight, max(1, cfg.top_k_embedding))
     recovered_ids = naive_discretization(z, embed_layer.weight)
     for pos, token_id in fixed_public.items():
@@ -1335,7 +2463,24 @@ def validate_attack_api() -> Dict[str, Any]:
     names = list(sig.parameters)
     banned = ["reference", "original", "input_ids", "token_ids", "prompt", "text", "ground"]
     signature_hits = [name for name in names if any(item in name for item in banned)]
-    checked = [invert_observed, server_attention_bundle, server_forward_with_attention, stage_b_optimize]
+    checked = [
+        invert_observed,
+        server_attention_bundle,
+        server_forward_with_attention,
+        stage_b_optimize,
+        build_attention_scale_alpha,
+        attention_scaled_activation_loss,
+        attention_weighted_residual_loss,
+        attention_linear_weighted_residual_loss,
+        attention_scale_linear_schedule_beta,
+        embedding_uncertainty_gate,
+        embedding_uncertainty_scores,
+        apply_adaptive_attention_beta,
+        residualize_attention_alpha,
+        calibrated_residual_alpha,
+        projection_refinement_loss,
+        projection_refine_embeddings,
+    ]
     banned_globals = {"original_ids", "original_tokens", "reference_embedding", "reference_tokens", "ground_truth_ids", "dummy_embeds_for_server_attention"}
     ast_hits: List[Dict[str, str]] = []
     dummy_hits: List[str] = []
@@ -1411,6 +2556,7 @@ def run_one_config(cfg: SAWConfig, resume: bool) -> Dict[str, Any]:
     all_attention_stats = []
     all_rollout_stats = []
     all_weight_stats = []
+    all_alpha_stats = []
     all_variable_mask_audits = []
     loss_breakdown = []
     for prompt_id, prompt in enumerate(prompts):
@@ -1474,6 +2620,13 @@ def run_one_config(cfg: SAWConfig, resume: bool) -> Dict[str, Any]:
                 "all_token_uniform_loss": losses.get("all_token_uniform_loss"),
                 "variable_uniform_loss": losses.get("variable_uniform_loss"),
                 "weighted_variable_loss": losses.get("weighted_variable_loss"),
+                "attention_scaled_loss": losses.get("attention_scaled_loss"),
+                "scale_loss_active": losses.get("scale_loss_active"),
+                "projection_refinement_used": losses.get("projection_refinement_used"),
+                "projection_refinement_loss": losses.get("projection_refinement_loss"),
+                "projection_scale_loss": losses.get("projection_scale_loss"),
+                "projection_loss": losses.get("projection_loss"),
+                "loss_mode": losses.get("loss_mode"),
                 "vocab_loss": losses["vocab_loss"],
                 "context_loss": losses["context_loss"],
                 "cosine_similarity": losses["cosine_similarity"],
@@ -1501,6 +2654,8 @@ def run_one_config(cfg: SAWConfig, resume: bool) -> Dict[str, Any]:
             all_attention_stats.append({"prompt_id": prompt_id, **attn_stats})
             all_rollout_stats.append({"prompt_id": prompt_id, **rollout_stats})
             all_weight_stats.append({"prompt_id": prompt_id, **weight_stats})
+            if cfg.method in ATTN_SCALE_METHODS:
+                all_alpha_stats.append({"prompt_id": prompt_id, **weight_stats})
             all_variable_mask_audits.append({"prompt_id": prompt_id, **weight_stats.get("variable_mask_audit", {})})
             loss_breakdown.append({"prompt_id": prompt_id, "stage_b_history": stage_b_history, "final": losses})
             print(
@@ -1540,6 +2695,8 @@ def run_one_config(cfg: SAWConfig, resume: bool) -> Dict[str, Any]:
     json_dump(out / "server_attention_stats.json", {"samples": all_attention_stats})
     json_dump(out / "attention_rollout.json", {"samples": all_rollout_stats})
     json_dump(out / "token_weight_stats.json", {"samples": all_weight_stats})
+    if all_alpha_stats:
+        json_dump(out / "alpha_scale_stats.json", {"samples": all_alpha_stats})
     json_dump(out / "variable_mask_audit.json", {"samples": all_variable_mask_audits})
     json_dump(out / "loss_breakdown.json", {"samples": loss_breakdown})
     done.write_text("complete\n", encoding="utf-8")
@@ -1711,7 +2868,17 @@ def config_from_args(args: argparse.Namespace, method: str, seed: int, run_name:
         weight_power=args.weight_power,
         weight_min=args.weight_min,
         weight_max=args.weight_max,
+        alpha_min=args.alpha_min,
+        alpha_max=args.alpha_max,
+        attention_start_ratio=args.attention_start_ratio,
+        attention_full_ratio=args.attention_full_ratio,
+        uncertainty_fraction=args.uncertainty_fraction,
+        adaptive_min_beta=args.adaptive_min_beta,
+        refine_epoch=args.refine_epoch,
+        lambda_projection=args.lambda_projection,
+        refine_lr_scale=args.refine_lr_scale,
         beta=args.beta,
+        residual_alpha_rho=args.residual_alpha_rho,
         last_window_size=args.last_window_size,
         residual_rollout=not args.no_residual_rollout,
         server_rollout_depth=args.server_rollout_depth,
@@ -1768,6 +2935,7 @@ def write_summary(root: Path) -> None:
                 "max_token_len": config.get("max_token_len"),
                 "top_k_embedding": m.get("top_k_embedding"),
                 "top_y_semantic": m.get("top_y_semantic"),
+                "residual_alpha_rho": config.get("residual_alpha_rho"),
                 "token_accuracy_mean": m.get("token_accuracy", {}).get("mean"),
                 "token_accuracy_std": m.get("token_accuracy", {}).get("std"),
                 "bleu_mean": m.get("bleu", {}).get("mean"),
@@ -1890,6 +3058,7 @@ def collect_ablation_rows(root: Path, subdirs: Sequence[str]) -> List[Dict[str, 
                 "configured_weight_max": configured_weight_max,
                 "residual_rollout": config.get("residual_rollout"),
                 "server_rollout_depth": config.get("server_rollout_depth"),
+                "residual_alpha_rho": config.get("residual_alpha_rho"),
                 "token_accuracy_mean": metrics.get("token_accuracy", {}).get("mean"),
                 "token_accuracy_std": metrics.get("token_accuracy", {}).get("std"),
                 "bleu_mean": metrics.get("bleu", {}).get("mean"),
@@ -3115,6 +4284,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--weight-power", type=float, default=0.5)
     parser.add_argument("--weight-min", type=float, default=0.25)
     parser.add_argument("--weight-max", type=float, default=4.0)
+    parser.add_argument("--alpha-min", type=float, default=0.5)
+    parser.add_argument("--alpha-max", type=float, default=2.0)
+    parser.add_argument("--attention-start-ratio", type=float, default=0.7)
+    parser.add_argument("--attention-full-ratio", type=float, default=0.7)
+    parser.add_argument("--uncertainty-fraction", type=float, default=0.3)
+    parser.add_argument("--adaptive-min-beta", type=float, default=0.05)
+    parser.add_argument("--refine-epoch", type=int, default=10)
+    parser.add_argument("--lambda-projection", type=float, default=0.1)
+    parser.add_argument("--refine-lr-scale", type=float, default=0.25)
+    parser.add_argument("--residual-alpha-rho", type=float, default=1.0)
     parser.add_argument("--beta", type=float, default=0.5)
     parser.add_argument("--last-window-size", type=int, default=8)
     parser.add_argument("--no-residual-rollout", action="store_true")
@@ -3141,6 +4320,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    args.method = canonical_method(args.method)
+    args.methods = [canonical_method(method) for method in args.methods]
+    args.semantic_speculation = not args.disable_semantic_speculation
+    validate_strict_top1_for_mode(args)
     if args.transformers_cache:
         os.environ.setdefault("TRANSFORMERS_CACHE", args.transformers_cache)
     if args.mode == "download-skytrax":
