@@ -73,6 +73,7 @@ METHODS = [
     "P4S",
     "P4D",
     "P4DL",
+    "P4LWR",
     "P4DR",
     "P4C",
     "P4DG",
@@ -96,6 +97,7 @@ METHODS = [
     "attn_scale_mean_query_schedule_residual",
     "attn_scale_mean_query_adaptive_beta",
     "attn_scale_mean_query_schedule_refine",
+    "attn_last_window_linear_residual_schedule",
     "confidence_aware_rollout_residual",
     "attn_weighted_residual_ptr",
     "confidence_aware_rollout_residual_ptr",
@@ -112,6 +114,7 @@ METHOD_ALIASES = {
     "P4S": "attn_scale_mean_query_schedule",
     "P4D": "attn_weighted_residual_schedule",
     "P4DL": "attn_linear_weighted_residual_schedule",
+    "P4LWR": "attn_last_window_linear_residual_schedule",
     "P4DR": "attn_rho_weighted_residual_schedule",
     "P4C": "attn_calibrated_weighted_residual_schedule",
     "P4DG": "attn_gate_weighted_residual_schedule",
@@ -135,6 +138,7 @@ ATTN_SCALE_METHODS = {
     "attn_scale_mean_query_schedule_residual",
     "attn_weighted_residual_schedule",
     "attn_linear_weighted_residual_schedule",
+    "attn_last_window_linear_residual_schedule",
     "attn_rho_weighted_residual_schedule",
     "attn_calibrated_weighted_residual_schedule",
     "attn_gate_weighted_residual_schedule",
@@ -162,6 +166,10 @@ ATTENTION_WEIGHTED_RESIDUAL_METHODS = {
     "confidence_aware_rollout_residual",
     "attn_weighted_residual_ptr",
     "confidence_aware_rollout_residual_ptr",
+}
+LINEAR_WEIGHTED_RESIDUAL_METHODS = {
+    "attn_linear_weighted_residual_schedule",
+    "attn_last_window_linear_residual_schedule",
 }
 SERVER_ATTN_METHODS = RAW_SERVER_ATTN_METHODS | MTS_METHODS | ATTN_SCALE_METHODS | CAR_METHODS | PTR_METHODS
 SERVER_ATTENTION_METHODS = SERVER_ATTN_METHODS
@@ -744,6 +752,31 @@ class SAWConfig:
 
 def canonical_method(method: str) -> str:
     return METHOD_ALIASES.get(method, method)
+
+
+def attention_weight_source_for_method(method: str) -> str:
+    method = canonical_method(method)
+    return {
+        "server_attn_last_raw": "last_query_raw",
+        "mts_mean_query": "mean_query",
+        "mts_last_window": "last_window_mean",
+        "attn_scale_mean_query": "mean_query",
+        "attn_scale_mean_query_schedule": "mean_query",
+        "attn_scale_mean_query_schedule_residual": "mean_query",
+        "attn_weighted_residual_schedule": "mean_query",
+        "attn_linear_weighted_residual_schedule": "mean_query",
+        "attn_last_window_linear_residual_schedule": "last_window_mean",
+        "attn_rho_weighted_residual_schedule": "mean_query",
+        "attn_calibrated_weighted_residual_schedule": "mean_query",
+        "attn_gate_weighted_residual_schedule": "mean_query",
+        "attn_scale_mean_query_adaptive_beta": "mean_query",
+        "attn_scale_mean_query_schedule_refine": "mean_query",
+        "confidence_aware_rollout_residual": "mean_query",
+        "attn_weighted_residual_ptr": "mean_query",
+        "confidence_aware_rollout_residual_ptr": "mean_query",
+        "attn_scale_last_window": "last_window_mean",
+        "attn_scale_last_window_gate": "last_window_mean",
+    }[method]
 
 
 def validate_strict_top1_config(args) -> None:
@@ -1509,7 +1542,7 @@ def build_confidence_aware_residual_alpha(
 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, float]]:
     r_all = r_all.detach().float()
     r_last2 = r_last2.detach().float()
-    variable_mask = variable_mask.bool()
+    variable_mask = variable_mask.to(r_all.device).bool()
     if r_all.shape != r_last2.shape:
         raise ValueError(f"r_all and r_last2 shape mismatch: {r_all.shape} vs {r_last2.shape}")
     if r_all.shape != variable_mask.shape:
@@ -1885,6 +1918,7 @@ def server_attention_bundle(
     start = cfg.target_layer + 1
     if start >= len(model.model.layers):
         raise RuntimeError(f"target_layer={cfg.target_layer} leaves no server-side layers")
+    collection_depth = "all" if cfg.method in CAR_METHODS else cfg.server_rollout_depth
     with torch.no_grad():
         _hidden, _logits, collected = server_forward_with_attention(
             model,
@@ -1892,15 +1926,31 @@ def server_attention_bundle(
             observed_activation.to(dtype=next(model.parameters()).dtype),
             attention_mask,
             output_attentions=True,
-            rollout_depth=cfg.server_rollout_depth,
+            rollout_depth=collection_depth,
         )
     attentions = [attn for _idx, attn in collected]
     rollout = rollout_from_attentions(attentions, residual=cfg.residual_rollout)
     if cfg.method in CAR_METHODS:
         last2_attentions = attentions[-2:] if len(attentions) >= 2 else attentions
-        r_last2 = rollout_from_attentions(last2_attentions, residual=cfg.residual_rollout)
+        rollout_last2 = rollout_from_attentions(last2_attentions, residual=cfg.residual_rollout)
+        valid = attention_mask[0].to(rollout.device).bool()
+        variable = variable_audit.variable_mask.to(rollout.device).bool() & valid
+        r_all, car_query_positions = _attention_raw_from_rollout(
+            rollout,
+            valid,
+            variable,
+            "last_window_mean",
+            cfg.last_window_size,
+        )
+        r_last2, car_last2_query_positions = _attention_raw_from_rollout(
+            rollout_last2,
+            valid,
+            variable,
+            "last_window_mean",
+            cfg.last_window_size,
+        )
         weights, _confidence, weight_stats = build_car_attention_bundle_from_rollouts(
-            r_all=rollout,
+            r_all=r_all,
             r_last2=r_last2,
             variable_mask=variable_audit.variable_mask,
             weight_min=float(getattr(cfg, "car_weight_min", 0.5)),
@@ -1911,6 +1961,8 @@ def server_attention_bundle(
         weight_stats["method_role"] = "confidence_aware_rollout_residual"
         weight_stats["rollout_depth"] = "all+last2"
         weight_stats["attention_formula"] = "confidence_aware_rollout_residual"
+        weight_stats["car_query_positions"] = car_query_positions
+        weight_stats["car_last2_query_positions"] = car_last2_query_positions
     elif cfg.method == "server_attn_last_raw":
         weights, weight_stats = token_weights_from_rollout(rollout, attention_mask, "last_query", cfg.weight_floor, fixed_public)
         weight_stats["method_role"] = "negative_control_raw_last_query"
@@ -1929,7 +1981,7 @@ def server_attention_bundle(
         )
         if cfg.method in ATTENTION_WEIGHTED_RESIDUAL_METHODS:
             weight_stats["method_role"] = "attention_weighted_residual"
-        elif cfg.method == "attn_linear_weighted_residual_schedule":
+        elif cfg.method in LINEAR_WEIGHTED_RESIDUAL_METHODS:
             weight_stats["method_role"] = "attention_linear_weighted_residual"
         else:
             weight_stats["method_role"] = "attention_scaled_activation"
@@ -1952,7 +2004,7 @@ def server_attention_bundle(
         "target_layer_output_state": f"H^({cfg.target_layer}) is output of 0-based block {cfg.target_layer}",
         "server_start_layer": start,
         "server_layers": [int(idx) for idx, _attn in collected],
-        "rollout_depth": cfg.server_rollout_depth,
+        "rollout_depth": collection_depth,
         "residual_rollout": bool(cfg.residual_rollout),
         "layer_stats": [tensor_attention_stats(attn, idx) for idx, attn in collected],
         "dummy_attention_used": False,
@@ -2052,6 +2104,7 @@ def stage_b_optimize(
                     "attn_scale_mean_query_schedule_residual",
                     "attn_weighted_residual_schedule",
                     "attn_linear_weighted_residual_schedule",
+                    "attn_last_window_linear_residual_schedule",
                     "attn_rho_weighted_residual_schedule",
                     "attn_calibrated_weighted_residual_schedule",
                     "attn_gate_weighted_residual_schedule",
@@ -2073,7 +2126,9 @@ def stage_b_optimize(
                     ).to(server_weights.device)
                     if cfg.method in {
                         "attn_scale_mean_query_schedule_residual",
+                        "attn_linear_weighted_residual_schedule",
                         "attn_rho_weighted_residual_schedule",
+                        "attn_last_window_linear_residual_schedule",
                     }:
                         alpha_for_step = residualize_attention_alpha(
                             alpha_for_step,
@@ -2086,7 +2141,7 @@ def stage_b_optimize(
                 else:
                     attention_effective_beta = cfg.beta if attention_scale_schedule_active(step, cfg.epoch, cfg.attention_start_ratio) else 0.0
                     scale_loss_active = attention_effective_beta > 0.0
-                if cfg.method == "attn_linear_weighted_residual_schedule":
+                if cfg.method in LINEAR_WEIGHTED_RESIDUAL_METHODS:
                     attention_scaled = attention_linear_weighted_residual_loss(hidden, target, variable_audit.variable_mask, alpha_for_step)
                     attention_active_loss_mode = "attention_linear_weighted_residual"
                 elif cfg.method in ATTENTION_WEIGHTED_RESIDUAL_METHODS:
@@ -2288,26 +2343,7 @@ def invert_observed(
         raise RuntimeError(f"no initialization for method={method}")
     server_weights: Optional[torch.Tensor] = None
     if method in SERVER_ATTN_METHODS:
-        source = {
-            "server_attn_last_raw": "last_query_raw",
-            "mts_mean_query": "mean_query",
-            "mts_last_window": "last_window_mean",
-            "attn_scale_mean_query": "mean_query",
-            "attn_scale_mean_query_schedule": "mean_query",
-            "attn_scale_mean_query_schedule_residual": "mean_query",
-            "attn_weighted_residual_schedule": "mean_query",
-            "attn_linear_weighted_residual_schedule": "mean_query",
-            "attn_rho_weighted_residual_schedule": "mean_query",
-            "attn_calibrated_weighted_residual_schedule": "mean_query",
-            "attn_gate_weighted_residual_schedule": "mean_query",
-            "attn_scale_mean_query_adaptive_beta": "mean_query",
-            "attn_scale_mean_query_schedule_refine": "mean_query",
-            "confidence_aware_rollout_residual": "mean_query",
-            "attn_weighted_residual_ptr": "mean_query",
-            "confidence_aware_rollout_residual_ptr": "mean_query",
-            "attn_scale_last_window": "last_window_mean",
-            "attn_scale_last_window_gate": "last_window_mean",
-        }[method]
+        source = attention_weight_source_for_method(method)
         cfg.weight_source = source
         server_weights, server_stats, rollout_stats, weight_stats = server_attention_bundle(
             model, observed_activation, attention_mask, cfg, fixed_public, variable_audit

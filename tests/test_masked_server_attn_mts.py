@@ -296,6 +296,7 @@ class AttentionScalePureFunctionTests(unittest.TestCase):
         self.assertIn("P4", mts.METHODS)
         self.assertIn("P4D", mts.METHODS)
         self.assertIn("P4DL", mts.METHODS)
+        self.assertIn("P4LWR", mts.METHODS)
         self.assertIn("P4DR", mts.METHODS)
         self.assertIn("P4C", mts.METHODS)
         self.assertIn("P4DG", mts.METHODS)
@@ -306,6 +307,7 @@ class AttentionScalePureFunctionTests(unittest.TestCase):
         self.assertEqual(mts.canonical_method("P4"), "attn_scale_mean_query")
         self.assertEqual(mts.canonical_method("P4D"), "attn_weighted_residual_schedule")
         self.assertEqual(mts.canonical_method("P4DL"), "attn_linear_weighted_residual_schedule")
+        self.assertEqual(mts.canonical_method("P4LWR"), "attn_last_window_linear_residual_schedule")
         self.assertEqual(mts.canonical_method("P4DR"), "attn_rho_weighted_residual_schedule")
         self.assertEqual(mts.canonical_method("P4DG"), "attn_gate_weighted_residual_schedule")
         self.assertEqual(mts.canonical_method("P4C"), "attn_calibrated_weighted_residual_schedule")
@@ -318,6 +320,7 @@ class AttentionScalePureFunctionTests(unittest.TestCase):
                 "attn_scale_mean_query",
                 "attn_weighted_residual_schedule",
                 "attn_linear_weighted_residual_schedule",
+                "attn_last_window_linear_residual_schedule",
                 "attn_rho_weighted_residual_schedule",
                 "attn_gate_weighted_residual_schedule",
                 "attn_calibrated_weighted_residual_schedule",
@@ -331,6 +334,14 @@ class AttentionScalePureFunctionTests(unittest.TestCase):
         self.assertNotIn("attn_scale_mean_query_schedule_residual", mts.PROJECTION_REFINE_METHODS)
         self.assertTrue(mts.ATTN_SCALE_METHODS.isdisjoint(mts.DUMMY_METHODS))
         self.assertTrue(mts.ATTN_SCALE_METHODS.isdisjoint(mts.ALPHA_METHODS))
+
+    def test_p4lwr_uses_last_window_attention_source(self):
+        self.assertEqual(mts.attention_weight_source_for_method("P4LWR"), "last_window_mean")
+        self.assertEqual(
+            mts.attention_weight_source_for_method("attn_last_window_linear_residual_schedule"),
+            "last_window_mean",
+        )
+        self.assertEqual(mts.attention_weight_source_for_method("P4DL"), "mean_query")
 
     def test_calibrated_residual_alpha_gates_and_preserves_mean_one(self):
         variable = torch.tensor([False, True, True, True, True])
@@ -721,12 +732,129 @@ class TestCarPtrStrictTop1(unittest.TestCase):
         self.assertIn("rollout_last2_variable_mass", stats)
         self.assertEqual(stats["fixed_public_final_weight_sum"], 0.0)
 
-    def test_car_methods_do_not_use_uniform_early_return(self):
-        from pathlib import Path
+    def test_car_methods_use_rollout_bundle_even_with_uniform_source(self):
+        from unittest.mock import patch
+        import torch
+        import pia_masked_server_attn_pia as pia
 
-        source = Path('pia_masked_server_attn_pia.py').read_text()
-        expected = 'if cfg.weight_source == ' + chr(34) + 'uniform' + chr(34) + ' and cfg.method not in CAR_METHODS:'
-        self.assertIn(expected, source)
+        seq = 4
+        calls = []
+
+        class FakeModel(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.weight = torch.nn.Parameter(torch.ones(()))
+                self.model = type("ModelState", (), {"layers": [object(), object(), object(), object()]})()
+
+        def fake_server_forward_with_attention(*_args, **kwargs):
+            calls.append(kwargs)
+            attn_a = torch.tril(torch.ones(seq, seq, dtype=torch.float32))
+            attn_a = attn_a / attn_a.sum(dim=-1, keepdim=True).clamp_min(1e-12)
+            attn_b = torch.tril(
+                torch.tensor(
+                    [
+                        [1.0, 0.0, 0.0, 0.0],
+                        [0.6, 1.0, 0.0, 0.0],
+                        [0.2, 0.6, 1.0, 0.0],
+                        [0.1, 0.2, 0.6, 1.0],
+                    ],
+                    dtype=torch.float32,
+                )
+            )
+            attn_b = attn_b / attn_b.sum(dim=-1, keepdim=True).clamp_min(1e-12)
+            attn_c = torch.tril(
+                torch.tensor(
+                    [
+                        [1.0, 0.0, 0.0, 0.0],
+                        [0.2, 1.0, 0.0, 0.0],
+                        [0.6, 0.2, 1.0, 0.0],
+                        [0.1, 0.6, 0.2, 1.0],
+                    ],
+                    dtype=torch.float32,
+                )
+            )
+            attn_c = attn_c / attn_c.sum(dim=-1, keepdim=True).clamp_min(1e-12)
+            return (
+                torch.zeros(1, seq, 2),
+                torch.zeros(1, seq, 3),
+                [(1, attn_a), (2, attn_b), (3, attn_c)],
+            )
+
+        cfg = SAWConfig(
+            method="confidence_aware_rollout_residual",
+            run_name="car_bundle_test",
+            output_dir=".",
+            dataset_name="Skytrax",
+            dataset_path="data/airline.json",
+            dataset_len=1,
+            seed=42,
+            participant_number=4,
+            attacker_position=4,
+            inverted_block_count=1,
+            target_layer=0,
+            epoch=5,
+            stage_a_epoch=0,
+            lr=0.1,
+            lambda_vocab=0.1,
+            lambda_dummy=0.0,
+            lambda_context=0.0,
+            top_k_embedding=1,
+            top_y_semantic=0,
+            gamma=0.0,
+            max_token_len=16,
+            grad_clip=1.0,
+            weight_source="uniform",
+            weight_floor=0.05,
+            weight_power=0.5,
+            weight_min=0.25,
+            weight_max=4.0,
+            alpha_min=0.5,
+            alpha_max=1.5,
+            attention_start_ratio=0.5,
+            attention_full_ratio=0.7,
+            uncertainty_fraction=0.3,
+            adaptive_min_beta=0.05,
+            refine_epoch=10,
+            lambda_projection=0.1,
+            refine_lr_scale=0.25,
+            beta=0.25,
+            last_window_size=2,
+            residual_rollout=True,
+            server_rollout_depth="last2",
+            adaptive_discretization=True,
+            semantic_speculation=False,
+            local_files_only=True,
+        )
+        variable_mask = torch.tensor([False, True, True, True])
+        audit = pia.VariableMaskAudit(
+            valid_mask=torch.ones(seq, dtype=torch.bool),
+            fixed_public_mask=torch.tensor([True, False, False, False]),
+            special_mask=torch.zeros(seq, dtype=torch.bool),
+            variable_mask=variable_mask,
+            uniform_weights=variable_mask.float(),
+            variable_count=3,
+            known_public_special_positions=[0],
+            token_id_based_special_mask_available=False,
+            last_valid_position=3,
+            rows=[],
+        )
+
+        with patch.object(pia, "server_forward_with_attention", side_effect=fake_server_forward_with_attention):
+            weights, server_stats, rollout_stats, weight_stats = pia.server_attention_bundle(
+                FakeModel(),
+                torch.zeros(1, seq, 2),
+                torch.ones(1, seq, dtype=torch.long),
+                cfg,
+                {0: 1},
+                audit,
+            )
+
+        self.assertEqual(calls[0]["rollout_depth"], "all")
+        self.assertEqual(tuple(weights.shape), (seq,))
+        self.assertEqual(weight_stats["rollout_depth"], "all+last2")
+        self.assertEqual(weight_stats["attention_formula"], "confidence_aware_rollout_residual")
+        self.assertEqual(server_stats["server_layers"], [1, 2, 3])
+        self.assertEqual(rollout_stats["rollout_shape"], [seq, seq])
 
     def test_new_method_aliases_resolve(self):
         import pia_masked_server_attn_pia as pia
