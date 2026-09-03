@@ -1,0 +1,10 @@
+seed,method,prompt_count,uncertain_token_total,uncertain_token_mean,attempted_patches,continuous_candidate_generated_count,top1_changed_candidate_count,accepted_repair_count,rejected_repair_count,rollback_count,rollback_inferred_from_rejected_events,final_changed_token_count_vs_B0V,rap_vs_shuffled_different_prompt_count,rap_vs_shuffled_different_token_count,relation_destination_diff_ratio
+45,SPARSE_FIXED,150,5128,34.18666666666667,3060,3060,0,837,2223,not_logged,2223,not_applicable,not_applicable,not_applicable,not_logged
+45,RAP_FINAL,150,5128,34.18666666666667,2815,2815,2162,522,2293,not_logged,2293,0,0,0,not_logged
+45,SHUFFLED_REL,150,5128,34.18666666666667,2849,2849,2238,515,2334,not_logged,2334,0,0,0,not_logged
+46,SPARSE_FIXED,150,5128,34.18666666666667,2948,2948,0,859,2089,not_logged,2089,not_applicable,not_applicable,not_applicable,not_logged
+46,RAP_FINAL,150,5128,34.18666666666667,2764,2764,2106,490,2274,not_logged,2274,5,0,0,not_logged
+46,SHUFFLED_REL,150,5128,34.18666666666667,2720,2720,2052,478,2242,not_logged,2242,5,0,0,not_logged
+47,SPARSE_FIXED,150,5128,34.18666666666667,2912,2912,0,880,2032,not_logged,2032,not_applicable,not_applicable,not_applicable,not_logged
+47,RAP_FINAL,150,5128,34.18666666666667,2706,2706,2103,520,2186,not_logged,2186,0,0,0,not_logged
+47,SHUFFLED_REL,150,5128,34.18666666666667,2683,2683,2073,479,2204,not_logged,2204,0,0,0,not_logged

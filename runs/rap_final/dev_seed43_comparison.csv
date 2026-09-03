@@ -1,0 +1,8 @@
+method,run_name,token_accuracy,bleu,prompt_exact_match,completed_sample_count,failed_sample_count,output_dir
+original_pia_baseline,original_pia_baseline,0.8341361083696835,0.6383420421963965,0.0,28,0,runs/rap_final/dev_seed43/original_pia_baseline
+variable_only_uniform,variable_only_uniform,0.8416338588027145,0.649630224197963,0.0,28,0,runs/rap_final/dev_seed43/variable_only_uniform
+sparse_fixed,sparse_fixed,0.8491871471602089,0.6629856553041952,0.0,28,0,runs/rap_final/dev_seed43/sparse_fixed
+rel_order,rel_order,0.8471990736392574,0.6563482744457193,0.0,28,0,runs/rap_final/dev_seed43/rel_order
+rap_cont_gate,rap_cont_gate,0.848089987839216,0.6608479911221948,0.0,28,0,runs/rap_final/dev_seed43/rap_cont_gate
+rap_final,rap_final,0.8441183308524038,0.6519883096925427,0.0,28,0,runs/rap_final/dev_seed43/rap_final
+shuffled_rel,shuffled_rel,0.8461591471789345,0.6569534460473485,0.0,28,0,runs/rap_final/dev_seed43/shuffled_rel

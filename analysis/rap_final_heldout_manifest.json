@@ -1,0 +1,16 @@
+{
+  "created_for": "RAP-FINAL: Top-1 Relational Sparse Repair with Discrete Acceptance",
+  "development_sets": [
+    "data/airline.json seeds 42/43/44 are development/diagnostic only"
+  ],
+  "source_dataset": "data/skytrax_150.json",
+  "source_prompt_count": 150,
+  "development_prompt_count": 29,
+  "removed_overlap_or_duplicate_count": 0,
+  "heldout_prompt_count": 150,
+  "heldout_path": "data/rap_final_heldout.json",
+  "heldout_file_sha256": "0add9aa369f6ee222c74c90c5cf77dbb7e4f76d7fa5facce74efe3b8caecf90d",
+  "normalization": "collapse whitespace, strip, lowercase, SHA256",
+  "overlap_rows": [],
+  "no_test_prompt_modified_after_results": true
+}
