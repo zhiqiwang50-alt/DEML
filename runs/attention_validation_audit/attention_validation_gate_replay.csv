@@ -1,0 +1,4 @@
+gate,accepted_candidate_count,rejected_candidate_count,positive_retained,harmful_retained,harmful_rejected,beneficial_rejected,gate_precision,harm_rejection_rate,beneficial_retention_rate,mean_gt_gain_per_accepted
+CUT_ONLY,239,0,118,27,0,0,0.49372384937238495,0.0,1.0,0.4895397489539749
+TRUE_ATTN_GATE,208,31,106,22,5,12,0.5096153846153846,0.18518518518518517,0.8983050847457628,0.5240384615384616
+SHUFFLED_ATTN_GATE,125,114,64,17,10,54,0.512,0.37037037037037035,0.5423728813559322,0.456

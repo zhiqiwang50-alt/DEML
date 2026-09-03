@@ -1,0 +1,5 @@
+method,token_accuracy,bleu,exact_match,ned,completed_sample_count,failed_sample_count,has_nan,output_dir,reused_from_acdr
+b0,0.8378855490118047,0.6414763941990775,0.0,0.16079002562301473,28,0,False,runs/acdr/dev_seed42/b0,True
+b0_sparse,0.8666333322564294,0.702876080107508,0.0,0.13233421932812872,28,0,False,runs/acdr/dev_seed42/b0_sparse,True
+b0_laer,0.8657163093757748,0.700081891328645,0.0,0.13323186828941724,28,0,False,runs/b0_laer/dev_seed42/b0_laer,False
+b0_shuffled_laer,0.8605956151924768,0.6911791041639574,0.0,0.138309601120619,28,0,False,runs/b0_laer/dev_seed42/b0_shuffled_laer,False

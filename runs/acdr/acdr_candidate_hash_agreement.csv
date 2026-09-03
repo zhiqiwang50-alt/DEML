@@ -1,0 +1,2 @@
+comparison,prompt_count,candidate_pool_hash_agreement_count,candidate_pool_hash_agreement_rate,required_agreement_rate
+b0_acdr_vs_b0_shuffled_attn,28,2,0.07142857142857142,1.0

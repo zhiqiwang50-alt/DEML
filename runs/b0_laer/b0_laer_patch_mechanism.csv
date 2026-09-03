@@ -1,0 +1,5 @@
+method,sample_count,patch_event_count,accepted_patch_count,rejected_patch_count,rejected_by_laer_count,accept_rate,delta_laer_mean,laer_edge_count_mean,illegal_q_le_k_total,fixed_public_key_hit_total,accepted_beneficial_patch_count,accepted_harmful_patch_count,rejected_beneficial_patch_count,rejected_harmful_patch_count
+b0,28,0,0,0,0,,,,0,0,0,0,0,0
+b0_sparse,28,560,216,344,0,0.38571428571428573,,,0,0,0,0,0,0
+b0_laer,28,560,167,393,61,0.2982142857142857,-0.0013042824524245656,13940.771929824561,0,0,107,6,11,17
+b0_shuffled_laer,28,560,133,427,107,0.2375,-0.00022534466250202138,13976.533333333333,0,0,84,6,41,16

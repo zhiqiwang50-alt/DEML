@@ -1,0 +1,5 @@
+method,complete_file,predictions,completed_sample_count,failed_sample_count,has_nan,token_accuracy,bleu
+b0,True,28,28,0,False,0.8378855490118047,0.6414763941990775
+b0_sparse,True,28,28,0,False,0.8666333322564294,0.702876080107508
+b0_acdr,True,28,28,0,False,0.8628497787889021,0.6982807071953692
+b0_shuffled_attn,True,28,28,0,False,0.8482857326624663,0.6633547000549184

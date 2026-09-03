@@ -1,0 +1,2 @@
+comparison,pre_divergence_patch_count,pre_divergence_candidate_hash_agreement_count,pre_divergence_candidate_hash_agreement_rate,prompt_divergence_count,required_pre_divergence_agreement_rate
+b0_laer_vs_b0_shuffled_laer,207,207,1.0,23,1.0

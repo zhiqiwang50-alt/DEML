@@ -1,0 +1,4 @@
+method,sample_count,accepted_patch_count,rejected_patch_count,candidate_pool_hashes,attention_js_improved_accepted_count
+b0_sparse,28,216,344,28,0
+b0_acdr,28,209,351,28,209
+b0_shuffled_attn,28,137,421,28,137

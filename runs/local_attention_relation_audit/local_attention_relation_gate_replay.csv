@@ -1,0 +1,5 @@
+gate,accepted_candidate_count,rejected_candidate_count,positive_retained,harmful_retained,harmful_rejected,beneficial_rejected,gate_precision,harm_rejection_rate,beneficial_retention_rate,mean_gt_gain_per_accepted
+CUT_ONLY,216,0,125,21,0,0,0.5787037037037037,0.0,1.0,0.5694444444444444
+MASS_GATE,167,49,115,7,14,10,0.688622754491018,0.6666666666666666,0.92,0.7604790419161677
+LAER_GATE,166,50,114,6,15,11,0.6867469879518072,0.7142857142857143,0.912,0.7771084337349398
+SHUFFLED_LAER_GATE,135,81,95,4,17,30,0.7037037037037037,0.8095238095238095,0.76,0.8074074074074075
