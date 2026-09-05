@@ -15,7 +15,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 
 ROOT = Path(__file__).resolve().parent
-RUN_ROOT = ROOT / "runs" / "paper_final"
+RUN_ROOT = ROOT / "runs" / "laer_final"
 SPLIT_PATH = ROOT / "runs" / "suffix_attention_edge_rerank_pia" / "splits" / "skytrax150_split_20260706.json"
 DATASET_PATH = ROOT / "data" / "skytrax_150.json"
 DEV_DATASET_PATH = ROOT / "data" / "airline.json"
@@ -269,7 +269,7 @@ def create_provenance() -> Dict[str, Any]:
     dev_hashes = {prompt_hash(text) for text in dev_prompts}
     exposure_hits = []
     for cfg_path in (ROOT / "runs").glob("**/config.json"):
-        if "paper_final" in cfg_path.parts:
+        if "laer_final" in cfg_path.parts:
             continue
         try:
             cfg = load_json(cfg_path)
@@ -307,8 +307,8 @@ def create_provenance() -> Dict[str, Any]:
         "exposure_hits": exposure_hits,
         "split_payload_summary": {k: split[k] for k in ["dataset_name", "dataset_path", "dataset_len", "prompt_split_seed", "note"] if k in split},
     }
-    json_dump(RUN_ROOT / "paper_provenance_audit.json", payload)
-    json_dump(ROOT / "paper_final" / "provenance_audit.json", payload)
+    json_dump(RUN_ROOT / "laer_provenance_audit.json", payload)
+    json_dump(ROOT / "laer_final" / "provenance_audit.json", payload)
     return payload
 
 
@@ -350,7 +350,7 @@ def create_preregistration(force: bool = False) -> Dict[str, Any]:
         "holdout_status": provenance["holdout_status"],
     }
     json_dump(path, payload)
-    json_dump(RUN_ROOT / "paper_experiment_manifest.json", payload)
+    json_dump(RUN_ROOT / "laer_experiment_manifest.json", payload)
     return payload
 
 
@@ -396,9 +396,9 @@ def integrity_checks() -> Dict[str, Any]:
         "fixed_public_token_audit_covered_by": "tests.test_b0_laer.test_laer_edges_are_causal_and_no_fixed_keys",
         "state_persistence_covered_by": "tests.test_b0_laer.test_state_persistence_and_rollback_are_explicit",
     }
-    json_dump(RUN_ROOT / "paper_integrity_audit.json", payload)
+    json_dump(RUN_ROOT / "laer_integrity_audit.json", payload)
     if not payload["passed"]:
-        raise RuntimeError("integrity checks failed; see runs/paper_final/paper_integrity_audit.json")
+        raise RuntimeError("integrity checks failed; see runs/laer_final/laer_integrity_audit.json")
     return payload
 
 
@@ -419,9 +419,9 @@ def smoke() -> Dict[str, Any]:
         "rows": rows,
         "passed": all(row["returncode"] == 0 for row in rows),
     }
-    json_dump(RUN_ROOT / "paper_smoke_audit.json", payload)
+    json_dump(RUN_ROOT / "laer_smoke_audit.json", payload)
     if not payload["passed"]:
-        raise RuntimeError("smoke failed; see runs/paper_final/paper_smoke_audit.json")
+        raise RuntimeError("smoke failed; see runs/laer_final/laer_smoke_audit.json")
     return payload
 
 
@@ -538,13 +538,13 @@ def launch_scheduler(max_parallel: int = 4, poll_seconds: int = 120) -> Dict[str
             proc = subprocess.Popen(cmd, cwd=ROOT, env=env, stdout=stdout, stderr=stderr, text=True)
             active[proc.pid] = {"proc": proc, "row": row, "gpu": gpu, "stdout": stdout, "stderr": stderr, "started_at": now_stamp()}
         status = {"timestamp": now_stamp(), "active": [{"pid": pid, "gpu": item["gpu"], **item["row"]} for pid, item in active.items()], "completed_observed": completed}
-        json_dump(RUN_ROOT / "paper_driver_status.json", status)
+        json_dump(RUN_ROOT / "laer_driver_status.json", status)
         if not active and remaining and not available:
             time.sleep(poll_seconds)
         elif active:
             time.sleep(poll_seconds)
     final_status = status_report()
-    json_dump(RUN_ROOT / "paper_driver_status.json", final_status)
+    json_dump(RUN_ROOT / "laer_driver_status.json", final_status)
     return final_status
 
 
@@ -560,7 +560,7 @@ def status_report() -> Dict[str, Any]:
         "total_count": len(rows),
         "all_complete": all(r["valid_complete"] for r in rows),
     }
-    json_dump(RUN_ROOT / "paper_completeness_audit.json", payload)
+    json_dump(RUN_ROOT / "laer_completeness_audit.json", payload)
     return payload
 
 
@@ -688,7 +688,7 @@ def summarize() -> Dict[str, Any]:
     if not status["all_complete"]:
         raise RuntimeError("cannot summarize until all paper-final runs are valid complete")
     seed_rows = [summarize_run(r) for r in run_matrix()]
-    csv_write(RUN_ROOT / "paper_seed_results.csv", seed_rows)
+    csv_write(RUN_ROOT / "laer_seed_results.csv", seed_rows)
 
     main_rows = [r for r in seed_rows if r["phase"] == "main" and r["layer"] == MAIN_LAYER]
     main_summary = []
@@ -704,7 +704,7 @@ def summarize() -> Dict[str, Any]:
             "ned": mean(r["ned"] for r in rows),
             "exact_match": mean(r["exact_match"] for r in rows),
         })
-    csv_write(RUN_ROOT / "paper_main_results.csv", main_summary)
+    csv_write(RUN_ROOT / "laer_main_results.csv", main_summary)
 
     layer_rows = []
     for layer in [11, 17, 19]:
@@ -712,7 +712,7 @@ def summarize() -> Dict[str, Any]:
             rows = [r for r in seed_rows if r["layer"] == layer and r["seed"] == 42 and r["method"] == method]
             if rows:
                 layer_rows.append(rows[0])
-    csv_write(RUN_ROOT / "paper_layer_results.csv", layer_rows)
+    csv_write(RUN_ROOT / "laer_layer_results.csv", layer_rows)
 
     comparisons = [
         ("B0_SPARSE", "B0"),
@@ -755,19 +755,19 @@ def summarize() -> Dict[str, Any]:
             "bleu_ci_high": bleu_cluster[2],
             "bootstrap_rounds": BOOTSTRAP_ROUNDS,
         })
-    csv_write(RUN_ROOT / "paper_paired_comparisons.csv", paired_rows)
-    csv_write(RUN_ROOT / "paper_cluster_bootstrap.csv", cluster_rows)
+    csv_write(RUN_ROOT / "laer_paired_comparisons.csv", paired_rows)
+    csv_write(RUN_ROOT / "laer_cluster_bootstrap.csv", cluster_rows)
 
     patch_rows = [patch_mechanism_for(r) for r in run_matrix()]
-    csv_write(RUN_ROOT / "paper_patch_mechanism.csv", patch_rows)
-    csv_write(RUN_ROOT / "paper_attention_control.csv", [r for r in paired_rows if "B0_LAER_vs_B0_SHUFFLED_LAER" in r["comparison"]] + [r for r in cluster_rows if "B0_LAER_vs_B0_SHUFFLED_LAER" in r["comparison"]])
-    csv_write(RUN_ROOT / "paper_efficiency.csv", [{
+    csv_write(RUN_ROOT / "laer_patch_mechanism.csv", patch_rows)
+    csv_write(RUN_ROOT / "laer_attention_control.csv", [r for r in paired_rows if "B0_LAER_vs_B0_SHUFFLED_LAER" in r["comparison"]] + [r for r in cluster_rows if "B0_LAER_vs_B0_SHUFFLED_LAER" in r["comparison"]])
+    csv_write(RUN_ROOT / "laer_efficiency.csv", [{
         "method": method,
         "mean_runtime_per_prompt": mean(r["runtime_mean"] for r in seed_rows if r["method"] == method),
         "std_runtime_per_prompt": mean(r["runtime_std"] for r in seed_rows if r["method"] == method),
         "mean_peak_gpu_memory_mb": mean(r["peak_gpu_memory_mean"] for r in seed_rows if r["method"] == method),
     } for method in METHODS])
-    csv_write(RUN_ROOT / "paper_failure_summary.csv", [{
+    csv_write(RUN_ROOT / "laer_failure_summary.csv", [{
         **r,
         "failure_lines": len(load_jsonl(run_dir(r) / "failures.jsonl")),
     } for r in run_matrix()])
@@ -784,7 +784,7 @@ def summarize() -> Dict[str, Any]:
         conclusion = "C"
 
     md_lines = [
-        "# Paper Final Report",
+        "# LAER Final Report",
         "",
         "## Observation",
         "",
@@ -799,15 +799,15 @@ def summarize() -> Dict[str, Any]:
         "",
         "## Mechanism Evidence",
         "",
-        "Patch-level statistics are saved in `paper_patch_mechanism.csv`. Ground truth labels are computed only after each attack run completes.",
+        "Patch-level statistics are saved in `laer_patch_mechanism.csv`. Ground truth labels are computed only after each attack run completes.",
         "",
         "## Robustness",
         "",
-        "Layer-wise seed42 results for layers 11/17/19 are saved in `paper_layer_results.csv`.",
+        "Layer-wise seed42 results for layers 11/17/19 are saved in `laer_layer_results.csv`.",
         "",
         "## Efficiency",
         "",
-        "Runtime and peak GPU memory summaries are saved in `paper_efficiency.csv`.",
+        "Runtime and peak GPU memory summaries are saved in `laer_efficiency.csv`.",
         "",
         "## Supported Claims",
         "",
@@ -818,20 +818,20 @@ def summarize() -> Dict[str, Any]:
         "- Do not claim stable improvement beyond the frozen matrix.",
         "- Do not claim true attention contribution unless B0-LAER exceeds both B0-SPARSE and shuffled-LAER under the pre-registered criteria.",
         "",
-        "## Final Paper Recommendation",
+        "## Final LAER Recommendation",
         "",
         f"Conclusion code: {conclusion}.",
     ]
-    (RUN_ROOT / "paper_main_results.md").write_text("\n".join(md_lines[:10]) + "\n", encoding="utf-8")
-    (RUN_ROOT / "paper_final_report.md").write_text("\n".join(md_lines) + "\n", encoding="utf-8")
-    (RUN_ROOT / "paper_final_tables.tex").write_text("% See CSV files for exact generated values.\n", encoding="utf-8")
+    (RUN_ROOT / "laer_main_results.md").write_text("\n".join(md_lines[:10]) + "\n", encoding="utf-8")
+    (RUN_ROOT / "laer_final_report.md").write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    (RUN_ROOT / "laer_final_tables.tex").write_text("% See CSV files for exact generated values.\n", encoding="utf-8")
     payload = {"conclusion": conclusion, "status": status, "main_results": main_summary, "cluster_bootstrap": cluster_rows}
-    json_dump(RUN_ROOT / "paper_summary_payload.json", payload)
+    json_dump(RUN_ROOT / "laer_summary_payload.json", payload)
     return payload
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Pre-registered final paper experiment driver")
+    parser = argparse.ArgumentParser(description="Pre-registered final LAER experiment driver")
     parser.add_argument("--mode", choices=["preregister", "integrity", "smoke", "launch", "status", "summarize", "all"], default="status")
     parser.add_argument("--max-parallel", type=int, default=4)
     parser.add_argument("--poll-seconds", type=int, default=120)

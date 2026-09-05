@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 import torch
 
 import pia_b0_attention_consistency_repair as acdr
-from pia_shared_masking import build_variable_mask, variable_mask_audit_payload
+from pia_masked_server_attn_pia import build_variable_mask, variable_mask_audit_payload
 from pia_tinyllama import (
     ATTACKER_MAP,
     MODEL_NAME,

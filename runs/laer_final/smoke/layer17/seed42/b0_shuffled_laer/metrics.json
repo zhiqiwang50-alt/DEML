@@ -1,0 +1,63 @@
+{
+  "title": "B0 + Sparse + Local Attention Edge Residual Validation",
+  "method": "b0_shuffled_laer",
+  "token_accuracy": {
+    "mean": 0.0,
+    "std": 0.0
+  },
+  "bleu": {
+    "mean": 0.0030932447039559207,
+    "std": 0.0
+  },
+  "exact_match": {
+    "mean": 0.0,
+    "std": 0.0
+  },
+  "ned": {
+    "mean": 0.9833333333333333,
+    "std": 0.0
+  },
+  "runtime_seconds": {
+    "mean": 18.981870651245117,
+    "std": 0.0
+  },
+  "peak_gpu_memory_mb": {
+    "mean": 3135.8046875,
+    "std": 0.0
+  },
+  "sample_count": 1,
+  "seed": 42,
+  "target_layer": 17,
+  "completed_sample_count": 1,
+  "failed_sample_count": 0,
+  "dataset_meta": {
+    "dataset_name": "Skytrax",
+    "dataset_path": "data/skytrax_150.json",
+    "canonical_dataset_meta": {
+      "dataset_name": "Skytrax",
+      "dataset_path": "data/skytrax_150.json",
+      "available_valid_prompts": 150,
+      "requested_prompts": 150,
+      "selected_prompts": 150,
+      "selection_seed": 20260706,
+      "filtering": "ASCII English prompts, non-empty, normalized whitespace, length >= 20 characters"
+    },
+    "split_path": "runs/suffix_attention_edge_rerank_pia/splits/skytrax150_split_20260706.json",
+    "split_sha256": "bea33b8f74654a3f98a9fa474521931e96614c17d6f80fb0282124c2688fbe86",
+    "split_name": "holdout",
+    "prompt_split_seed": 20260706,
+    "full_dataset_len": 150,
+    "selected_prompt_ids": [
+      42
+    ],
+    "selected_prompts": 1,
+    "requested_prompts": 1,
+    "note": "prompt_id stores the fixed split id; ground truth is used only after attack completion for evaluation"
+  },
+  "top_k_embedding": 1,
+  "top_y_semantic": 0,
+  "semantic_speculation": false,
+  "adaptive_discretization": false,
+  "has_nan": false,
+  "output_dir": "runs/laer_final/smoke/layer17/seed42/b0_shuffled_laer"
+}

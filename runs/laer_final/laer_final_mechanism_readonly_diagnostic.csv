@@ -1,0 +1,16 @@
+exact_prompt_count,final_wrong_token_count,layer,method,scope,seed
+0,2743,17,B0_SPARSE,main,42
+0,2779,17,B0_LAER,main,42
+0,2973,17,B0_SHUFFLED_LAER,main,42
+0,2664,17,B0_SPARSE,main,43
+0,2638,17,B0_LAER,main,43
+0,2754,17,B0_SHUFFLED_LAER,main,43
+0,2465,17,B0_SPARSE,main,44
+0,2396,17,B0_LAER,main,44
+0,2606,17,B0_SHUFFLED_LAER,main,44
+0,3611,11,B0_SPARSE,robustness,42
+0,3635,11,B0_LAER,robustness,42
+0,3880,11,B0_SHUFFLED_LAER,robustness,42
+0,2606,19,B0_SPARSE,robustness,42
+0,2567,19,B0_LAER,robustness,42
+0,2754,19,B0_SHUFFLED_LAER,robustness,42

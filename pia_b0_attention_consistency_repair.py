@@ -21,7 +21,7 @@ import torch.nn.functional as F
 
 import laer_relation_isolation_utils as iso
 from pia_attention_guided import enforce_embedding_constraints, fixed_embedding_tensor, random_public_embeddings, variable_view
-from pia_shared_masking import build_variable_mask, uniform_all_token_activation_loss, variable_mask_audit_payload
+from pia_masked_server_attn_pia import build_variable_mask, uniform_all_token_activation_loss, variable_mask_audit_payload
 from pia_tinyllama import (
     ATTACKER_MAP,
     MODEL_NAME,

@@ -1,0 +1,101 @@
+{
+  "checks": [
+    {
+      "cmd": [
+        "/home/zhiqi/miniconda3/envs/deml/bin/python",
+        "-m",
+        "py_compile",
+        "pia_b0_laer.py",
+        "pia_b0_attention_consistency_repair.py",
+        "pia_attention_validation_audit.py",
+        "pia_tinyllama.py",
+        "laer_final_experiment_driver.py"
+      ],
+      "name": "py_compile",
+      "returncode": 0,
+      "runtime_seconds": 0.18000435829162598,
+      "stderr_tail": "",
+      "stdout_tail": ""
+    },
+    {
+      "cmd": [
+        "/home/zhiqi/miniconda3/envs/deml/bin/python",
+        "-m",
+        "unittest",
+        "tests.test_b0_laer",
+        "-v"
+      ],
+      "name": "unit_tests_b0_laer",
+      "returncode": 0,
+      "runtime_seconds": 6.182968378067017,
+      "stderr_tail": "test_attention_not_in_candidate_generation_or_selection (tests.test_b0_laer.B0LAERTests) ... ok\ntest_b0_regression_path_delegates_to_same_stage1 (tests.test_b0_laer.B0LAERTests) ... ok\ntest_changed_set_uses_actual_top1_changes (tests.test_b0_laer.B0LAERTests) ... ok\ntest_delta_laer_formula_and_gate (tests.test_b0_laer.B0LAERTests) ... ok\ntest_laer_edges_are_causal_and_no_fixed_keys (tests.test_b0_laer.B0LAERTests) ... ok\ntest_no_ground_truth_in_attack_api (tests.test_b0_laer.B0LAERTests) ... ok\ntest_pre_divergence_audit_requires_candidate_matching (tests.test_b0_laer.B0LAERTests) ... ok\ntest_resume_skips_existing_predictions_and_archives_failures (tests.test_b0_laer.B0LAERTests) ... ok\ntest_shuffled_preserves_row_distribution_by_permutation (tests.test_b0_laer.B0LAERTests) ... ok\ntest_state_persistence_and_rollback_are_explicit (tests.test_b0_laer.B0LAERTests) ... ok\ntest_strict_top1_config (tests.test_b0_laer.B0LAERTests) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.045s\n\nOK\n",
+      "stdout_tail": ""
+    },
+    {
+      "cmd": [
+        "/home/zhiqi/miniconda3/envs/deml/bin/python",
+        "-m",
+        "unittest",
+        "tests.test_b0_attention_consistency_repair",
+        "-v"
+      ],
+      "name": "unit_tests_acdr",
+      "returncode": 0,
+      "runtime_seconds": 5.343027591705322,
+      "stderr_tail": "test_attack_api_has_no_ground_truth_parameters (tests.test_b0_attention_consistency_repair.ACDRTests) ... ok\ntest_attention_row_normalization_masks_fixed_key (tests.test_b0_attention_consistency_repair.ACDRTests) ... ok\ntest_js_zero_for_identical_rows (tests.test_b0_attention_consistency_repair.ACDRTests) ... ok\ntest_method_integrity_no_forbidden_attention_loss (tests.test_b0_attention_consistency_repair.ACDRTests) ... ok\ntest_state_hash_changes_with_token_change (tests.test_b0_attention_consistency_repair.ACDRTests) ... ok\ntest_strict_top1_required (tests.test_b0_attention_consistency_repair.ACDRTests) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.044s\n\nOK\n",
+      "stdout_tail": ""
+    },
+    {
+      "cmd": [
+        "/home/zhiqi/miniconda3/envs/deml/bin/python",
+        "-m",
+        "unittest",
+        "tests.test_attention_validation_audit",
+        "-v"
+      ],
+      "name": "unit_tests_attention_validation",
+      "returncode": 0,
+      "runtime_seconds": 5.686036825180054,
+      "stderr_tail": "test_changed_positions_are_real_top1_changes (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\ntest_delta_mass_is_candidate_minus_before_improvement (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\ntest_fixed_causal_query_rows_do_not_use_attention_selection (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\ntest_gate_replay_uses_fixed_threshold (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\ntest_ground_truth_labeling_happens_after_score_trace_append (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\ntest_hash_agreement_fields_can_be_true_for_same_candidate (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\ntest_laer_uses_downstream_edges_and_excludes_fixed_public (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\ntest_no_misspelled_variable_audit_helper (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\ntest_patch_attention_mass_is_not_normalized_total (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\ntest_state_persistence_is_sparse_candidate_state (tests.test_attention_validation_audit.AttentionValidationAuditTests) ... ok\n\n----------------------------------------------------------------------\nRan 10 tests in 0.029s\n\nOK\n",
+      "stdout_tail": ""
+    },
+    {
+      "cmd": [
+        "/home/zhiqi/miniconda3/envs/deml/bin/python",
+        "pia_b0_attention_consistency_repair.py",
+        "--mode",
+        "verify",
+        "--dataset-path",
+        "data/skytrax_150.json",
+        "--dataset-len",
+        "1",
+        "--seed",
+        "20260706",
+        "--target-layer",
+        "17",
+        "--epoch",
+        "2",
+        "--k",
+        "1",
+        "--y",
+        "0",
+        "--disable-semantic-speculation",
+        "--no-adaptive-discretization",
+        "--local-files-only",
+        "--output-root",
+        "runs/laer_final/integrity"
+      ],
+      "name": "attack_api_leakage_boundary_audit",
+      "returncode": 0,
+      "runtime_seconds": 42.65939235687256,
+      "stderr_tail": "",
+      "stdout_tail": "sion_reason\": \"variable\"}, {\"position\": 73, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 74, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 75, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 76, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 77, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 78, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 79, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 80, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 81, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 82, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 83, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 84, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 85, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 86, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 87, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 88, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 89, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 90, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 91, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 92, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}, {\"position\": 93, \"valid\": true, \"fixed_public\": false, \"special\": false, \"token_id_special\": false, \"known_public_special\": false, \"variable_mask\": true, \"exclusion_reason\": \"variable\"}]}, \"attention_layer_count\": 4, \"passes\": true}\n"
+    }
+  ],
+  "fixed_public_token_audit_covered_by": "tests.test_b0_laer.test_laer_edges_are_causal_and_no_fixed_keys",
+  "passed": true,
+  "q_gt_k_legality_covered_by": "tests.test_b0_laer.test_laer_edges_are_causal_and_no_fixed_keys",
+  "state_persistence_covered_by": "tests.test_b0_laer.test_state_persistence_and_rollback_are_explicit",
+  "strict_top1_expected": true,
+  "timestamp": "2026-09-02 23:01:29 +0800"
+}

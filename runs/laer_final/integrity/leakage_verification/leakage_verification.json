@@ -1,0 +1,1001 @@
+{
+  "title": "B0 Attention-Consistency Guided Discrete Repair",
+  "dataset_meta": {
+    "dataset_name": "Skytrax",
+    "dataset_path": "data/skytrax_150.json",
+    "available_valid_prompts": 150,
+    "requested_prompts": 1,
+    "selected_prompts": 1,
+    "selection_seed": 20260706,
+    "filtering": "ASCII English prompts, non-empty, normalized whitespace, length >= 20 characters"
+  },
+  "target_layer": 17,
+  "manual_h_obs_boundary_vs_full_max_abs_diff": 0.0,
+  "manual_boundary_pass": true,
+  "attack_api_check": {
+    "signature": "(model: torch.nn.modules.module.Module, tokenizer: Any, cfg: __main__.ACDRConfig, observed_activation: torch.Tensor, seq_len: int, device: torch.device) -> Tuple[List[int], Dict[str, Any], Dict[str, Any], List[Dict[str, Any]], Dict[str, Any]]",
+    "parameter_names": [
+      "model",
+      "tokenizer",
+      "cfg",
+      "observed_activation",
+      "seq_len",
+      "device"
+    ],
+    "banned_signature_hits": [],
+    "banned_global_reference_hits": [],
+    "passes": true
+  },
+  "method_integrity_check": {
+    "checked_functions": [
+      "invert_observed",
+      "optimize_stage1_b0",
+      "repair_with_candidates",
+      "optimize_sparse_candidate_pool"
+    ],
+    "forbidden_hits": [],
+    "passes": true
+  },
+  "strict_top1": {
+    "enabled": true,
+    "K": 1,
+    "Y": 0,
+    "semantic": false,
+    "calibration": false
+  },
+  "no_ground_truth_in_attack": true,
+  "token_id_based_special_mask_available": false,
+  "variable_mask_audit": {
+    "variable_count": 93,
+    "known_public_special_positions": [
+      0
+    ],
+    "token_id_based_special_mask_available": false,
+    "last_valid_position": 93,
+    "semantic_note": "fixed_public positions such as position 0 are public framing positions available to the attacker. When attack API token ids are unavailable, this audit cannot claim EOS detection by token id. The last valid position is only a sequence boundary; exclude it as EOS only if the public protocol explicitly fixes the final token as EOS.",
+    "rows": [
+      {
+        "position": 0,
+        "valid": true,
+        "fixed_public": true,
+        "special": true,
+        "token_id_special": false,
+        "known_public_special": true,
+        "variable_mask": false,
+        "exclusion_reason": "fixed_public"
+      },
+      {
+        "position": 1,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 2,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 3,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 4,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 5,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 6,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 7,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 8,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 9,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 10,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 11,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 12,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 13,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 14,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 15,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 16,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 17,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 18,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 19,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 20,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 21,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 22,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 23,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 24,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 25,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 26,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 27,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 28,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 29,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 30,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 31,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 32,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 33,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 34,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 35,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 36,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 37,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 38,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 39,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 40,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 41,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 42,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 43,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 44,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 45,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 46,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 47,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 48,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 49,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 50,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 51,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 52,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 53,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 54,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 55,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 56,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 57,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 58,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 59,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 60,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 61,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 62,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 63,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 64,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 65,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 66,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 67,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 68,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 69,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 70,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 71,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 72,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 73,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 74,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 75,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 76,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 77,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 78,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 79,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 80,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 81,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 82,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 83,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 84,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 85,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 86,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 87,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 88,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 89,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 90,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 91,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 92,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      },
+      {
+        "position": 93,
+        "valid": true,
+        "fixed_public": false,
+        "special": false,
+        "token_id_special": false,
+        "known_public_special": false,
+        "variable_mask": true,
+        "exclusion_reason": "variable"
+      }
+    ]
+  },
+  "attention_layer_count": 4,
+  "passes": true
+}

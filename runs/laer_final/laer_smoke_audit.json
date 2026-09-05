@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "purpose": "Pipeline smoke only; Acc/BLEU are not used for method or parameter decisions.",
+  "rows": [
+    {
+      "dir": "runs/laer_final/smoke/layer17/seed42/b0",
+      "method": "B0",
+      "returncode": 0
+    },
+    {
+      "dir": "runs/laer_final/smoke/layer17/seed42/b0_sparse",
+      "method": "B0_SPARSE",
+      "returncode": 0
+    },
+    {
+      "dir": "runs/laer_final/smoke/layer17/seed42/b0_laer",
+      "method": "B0_LAER",
+      "returncode": 0
+    },
+    {
+      "dir": "runs/laer_final/smoke/layer17/seed42/b0_shuffled_laer",
+      "method": "B0_SHUFFLED_LAER",
+      "returncode": 0
+    }
+  ],
+  "timestamp": "2026-09-02 23:04:35 +0800"
+}

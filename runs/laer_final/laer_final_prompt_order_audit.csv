@@ -1,0 +1,9 @@
+scope,layer,seed,same_prompt_order_within_seed,prompt_count
+main,17,42,False,100
+main,17,43,False,100
+main,17,44,False,100
+main,17,across,True,100
+robustness,11,42,True,100
+robustness,11,across,True,100
+robustness,19,42,False,100
+robustness,19,across,True,100

@@ -22,7 +22,7 @@ from pia_attention_validation_audit import (
     local_relation_scores,
     mean,
 )
-from pia_shared_masking import build_variable_mask, variable_mask_audit_payload
+from pia_masked_server_attn_pia import build_variable_mask, variable_mask_audit_payload
 from pia_tinyllama import (
     ATTACKER_MAP,
     MODEL_NAME,
